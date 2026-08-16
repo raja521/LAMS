@@ -24,8 +24,8 @@ export default function ConfigError({ message }) {
         {message}
       </pre>
       <p style={{ fontSize: 14, color: '#555' }}>
-        Copy <code>.env.example</code> to <code>.env</code> at the repository root, set the value, then restart the
-        dev server.
+        Copy <code>.env.example</code> to <code>.env</code> inside the <code>client</code> folder, set the value,
+        then restart the dev server.
       </p>
     </div>
   );

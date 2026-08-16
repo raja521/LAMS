@@ -10,9 +10,9 @@
  */
 import process from 'node:process';
 
-const { default: config } = await import('../server/src/config/env.js');
-const { connectDatabase, disconnectDatabase } = await import('../server/src/config/db.js');
-const { Organization, User } = await import('../server/src/models/index.js');
+const { default: config } = await import('../src/config/env.js');
+const { connectDatabase, disconnectDatabase } = await import('../src/config/db.js');
+const { Organization, User } = await import('../src/models/index.js');
 
 const REQUIRED = ['SEED_ADMIN_EMAIL', 'SEED_ADMIN_PASSWORD', 'SEED_ADMIN_FIRST_NAME', 'SEED_ADMIN_LAST_NAME'];
 const missing = REQUIRED.filter((name) => !process.env[name]?.trim());
@@ -57,7 +57,6 @@ if (existing) {
     lastName: process.env.SEED_ADMIN_LAST_NAME.trim(),
     email,
     role: 'admin',
-    authProvider: 'local',
     organization: organization?._id,
     isActive: true,
   });

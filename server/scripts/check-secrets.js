@@ -15,7 +15,11 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+/* This script lives in server/scripts/, and checks the whole repository. */
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+
+/** Each project keeps its own pair of files. Both are checked. */
+const PROJECTS = ['server', 'client'];
 
 const SKIP_DIRECTORIES = new Set([
   'node_modules',
@@ -91,7 +95,7 @@ const PATTERNS = [
      * every high-confidence rule above (real keys, private keys, live connection
      * strings) still applies to tests, because those are never legitimate.
      */
-    skipIn: ['server/tests/', 'client/tests/'],
+    skipIn: ['server/tests/', 'client/tests/', 'server/scripts/import/samples/'],
     // Matches:  password: "something",  apiKey = 'something',  secret: `something`
     regex:
       /\b(?:password|passwd|secret|api[_-]?key|apikey|access[_-]?token|client[_-]?secret|private[_-]?key)\b\s*[:=]\s*(['"`])([^'"`\n]{8,})\1/gi,
@@ -109,7 +113,7 @@ const PATTERNS = [
 /** Files where a literal secret-looking string is expected and harmless. */
 const ALLOWLIST = [
   // This file contains the detection patterns themselves.
-  'scripts/check-secrets.js',
+  'server/scripts/check-secrets.js',
 ];
 
 async function* walk(directory) {
@@ -243,18 +247,25 @@ async function checkTrackedFiles() {
   }
 }
 
-/** The example file must contain placeholders, never real values. */
-async function checkExampleFile() {
-  const examplePath = path.join(ROOT, '.env.example');
+/** Each project's example file must contain placeholders, never real values. */
+async function checkExampleFiles() {
+  for (const project of PROJECTS) {
+    await checkExampleFile(project);
+  }
+}
+
+async function checkExampleFile(project) {
+  const relative = `${project}/.env.example`;
+  const examplePath = path.join(ROOT, project, '.env.example');
   let contents;
   try {
     contents = await fs.readFile(examplePath, 'utf8');
   } catch {
     findings.push({
-      file: '.env.example',
+      file: relative,
       line: 0,
       rule: 'missing-example',
-      description: 'There is no .env.example, so whoever deploys this has no list of required settings.',
+      description: `There is no ${relative}, so whoever deploys this has no list of required settings.`,
       excerpt: '',
     });
     return;
@@ -273,16 +284,17 @@ async function checkExampleFile() {
 
     if (!placeholder.test(value)) {
       findings.push({
-        file: '.env.example',
+        file: relative,
         line: index + 1,
         rule: 'example-real-value',
-        description: `${name} in .env.example does not look like a placeholder. The example file must never carry a real value.`,
+        description: `${name} in ${relative} does not look like a placeholder. The example file must never carry a real value.`,
         excerpt: `${name}=${redact(value)}`,
       });
     }
   });
 
-  notes.push(`.env.example lists ${contents.split('\n').filter((l) => /^[A-Z0-9_]+=/.test(l.trim())).length} settings`);
+  const active = contents.split('\n').filter((l) => /^[A-Z0-9_]+=/.test(l.trim())).length;
+  notes.push(`${relative} exists (${active} setting${active === 1 ? '' : 's'} set, the rest documented as defaults)`);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -293,7 +305,7 @@ async function main() {
   }
 
   await checkGitignore();
-  await checkExampleFile();
+  await checkExampleFiles();
   await checkTrackedFiles();
 
   console.log('\nLAMS — secret and configuration check\n');

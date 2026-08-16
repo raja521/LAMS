@@ -7,8 +7,7 @@ import asyncHandler from '../utils/asyncHandler.js';
 import { authenticate } from '../middleware/auth.js';
 import { issueTokens, verifyRefreshToken } from '../services/tokenService.js';
 import { recordActivity } from '../services/activityService.js';
-import { capabilitiesFor } from '../config/permissions.js';
-import { buildAuthorizeUrl, exchangeCodeForProfile, resolveRoleFromClaims } from '../services/azureAdService.js';
+import { capabilitiesFor, ROLES } from '../config/permissions.js';
 
 const router = Router();
 
@@ -17,7 +16,18 @@ const loginLimiter = rateLimit({
   max: config.rateLimit.authMax,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => config.isTest,
   message: { error: { code: 'RATE_LIMITED', message: 'Too many sign-in attempts. Please wait and try again.' } },
+});
+
+/* Signing up is cheaper to abuse than signing in, so it gets a tighter limit. */
+const registerLimiter = rateLimit({
+  windowMs: config.rateLimit.windowMs,
+  max: config.rateLimit.registerMax,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => config.isTest,
+  message: { error: { code: 'RATE_LIMITED', message: 'Too many accounts created. Please wait and try again.' } },
 });
 
 function sessionPayload(user) {
@@ -31,7 +41,6 @@ function sessionPayload(user) {
       role: user.role,
       modules: user.modules,
       organization: user.organization ?? null,
-      authProvider: user.authProvider,
       lastLoginAt: user.lastLoginAt,
     },
     capabilities: capabilitiesFor(user),
@@ -40,26 +49,90 @@ function sessionPayload(user) {
 
 /**
  * What the sign-in screen needs to render itself. Everything here comes from the
- * environment — the client never hard-codes a provider, tenant or org name.
+ * environment — the client never hard-codes anything about how sign-in works.
  */
 router.get('/config', (_req, res) => {
   res.json({
-    providers: config.auth.providers,
-    localEnabled: config.auth.localEnabled,
-    azureEnabled: config.auth.azure.enabled,
-    azureStartUrl: config.auth.azure.enabled ? `${config.apiBaseUrl}/api/auth/azure-ad/start` : null,
+    appName: 'LAMS',
+    registrationOpen: config.auth.allowRegistration,
+    minPasswordLength: config.auth.minPasswordLength,
   });
 });
 
-/** Local sign-in (email + password held in LAMS). */
+/**
+ * Create an account.
+ *
+ * Anyone may sign up, but a new account always lands on the lowest role and an
+ * administrator promotes it afterwards. The role is fixed here in code rather
+ * than read from DEFAULT_USER_ROLE on purpose: that setting is what an admin
+ * gets when creating a user, and if it were ever set to `admin` this form would
+ * become a way to grant yourself the run of the system. Anything the caller
+ * sends for `role` or `modules` is ignored for the same reason.
+ */
+router.post(
+  '/register',
+  registerLimiter,
+  asyncHandler(async (req, res) => {
+    if (!config.auth.allowRegistration) {
+      throw ApiError.forbidden('Creating your own account is turned off. Ask an administrator to set one up.');
+    }
+
+    const { firstName, lastName, email, password } = req.body ?? {};
+
+    if (!firstName?.trim() || !lastName?.trim()) {
+      throw ApiError.badRequest('Enter your first and last name.');
+    }
+    if (!email?.trim() || !password) {
+      throw ApiError.badRequest('Enter both an email address and a password.');
+    }
+    if (String(password).length < config.auth.minPasswordLength) {
+      throw ApiError.badRequest(
+        `Choose a password of at least ${config.auth.minPasswordLength} characters.`
+      );
+    }
+
+    const cleanEmail = String(email).toLowerCase().trim();
+
+    // Checked up front for a clear message; the unique index below is what
+    // actually guarantees it when two people sign up at the same instant.
+    if (await User.exists({ email: cleanEmail })) {
+      throw ApiError.conflict('That email address cannot be used. Try signing in instead.');
+    }
+
+    const user = new User({
+      firstName: String(firstName).trim(),
+      lastName: String(lastName).trim(),
+      email: cleanEmail,
+      role: ROLES.READ_ONLY,
+      modules: [],
+    });
+    await user.setPassword(String(password));
+
+    try {
+      await user.save();
+    } catch (error) {
+      if (error?.code === 11000) {
+        throw ApiError.conflict('That email address cannot be used. Try signing in instead.');
+      }
+      throw error;
+    }
+
+    await recordActivity({
+      req,
+      actor: user,
+      action: 'register',
+      summary: 'Created an account.',
+    });
+
+    res.status(201).json({ ...issueTokens(user), ...sessionPayload(user) });
+  })
+);
+
+/** Sign in with an email address and password. */
 router.post(
   '/login',
   loginLimiter,
   asyncHandler(async (req, res) => {
-    if (!config.auth.localEnabled) {
-      throw ApiError.badRequest('Password sign-in is disabled. Use your organizational account.');
-    }
-
     const { email, password } = req.body ?? {};
     if (!email || !password) throw ApiError.badRequest('Enter both your email address and password.');
 
@@ -70,7 +143,7 @@ router.post(
     // One message for both cases, so the response never confirms an address exists.
     const invalid = ApiError.unauthorized('That email address or password is not correct.');
 
-    if (!user || user.authProvider !== 'local') {
+    if (!user) {
       await recordActivity({
         req,
         action: 'login_failed',
@@ -101,64 +174,6 @@ router.post(
     await recordActivity({ req, actor: user, action: 'login', summary: 'Signed in with a password.' });
 
     res.json({ ...issueTokens(user), ...sessionPayload(user) });
-  })
-);
-
-/** Step 1 of the Microsoft organizational sign-in. */
-router.get(
-  '/azure-ad/start',
-  asyncHandler(async (req, res) => {
-    if (!config.auth.azure.enabled) {
-      throw ApiError.badRequest('Organizational sign-in is not enabled. Set AUTH_PROVIDER to include azure-ad.');
-    }
-    res.redirect(buildAuthorizeUrl({ state: req.query.redirect ?? '/' }));
-  })
-);
-
-/** Step 2 — Microsoft redirects here with a code. */
-router.get(
-  '/azure-ad/callback',
-  asyncHandler(async (req, res) => {
-    if (!config.auth.azure.enabled) throw ApiError.badRequest('Organizational sign-in is not enabled.');
-
-    const { code, error, error_description: errorDescription } = req.query;
-    if (error) throw ApiError.badRequest(`Microsoft sign-in failed: ${errorDescription ?? error}`);
-    if (!code) throw ApiError.badRequest('Microsoft sign-in did not return an authorization code.');
-
-    const claims = await exchangeCodeForProfile(code);
-    const email = (claims.preferred_username ?? claims.email ?? '').toLowerCase();
-    if (!email) throw ApiError.badRequest('Your Microsoft account did not supply an email address.');
-
-    let user = await User.findOne({ $or: [{ externalId: claims.oid }, { email }] });
-    if (!user) {
-      const [firstName, ...rest] = (claims.name ?? email).split(' ');
-      user = new User({
-        firstName,
-        lastName: rest.join(' ') || firstName,
-        email,
-        authProvider: 'azure-ad',
-        externalId: claims.oid,
-        // Role comes from group mapping in the environment, or DEFAULT_USER_ROLE.
-        role: resolveRoleFromClaims(claims),
-      });
-    } else {
-      user.externalId = claims.oid ?? user.externalId;
-      user.authProvider = 'azure-ad';
-      const mapped = resolveRoleFromClaims(claims, { fallback: null });
-      if (mapped) user.role = mapped;
-    }
-
-    if (!user.isActive) throw ApiError.forbidden('This account has been deactivated.');
-
-    user.lastLoginAt = new Date();
-    await user.save();
-    await recordActivity({ req, actor: user, action: 'login', summary: 'Signed in with a Microsoft account.' });
-
-    const tokens = issueTokens(user);
-    const redirect = new URL('/auth/callback', config.clientUrl);
-    redirect.searchParams.set('access_token', tokens.accessToken);
-    redirect.searchParams.set('refresh_token', tokens.refreshToken);
-    res.redirect(redirect.toString());
   })
 );
 

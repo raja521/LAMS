@@ -10,7 +10,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-const { buildWorkbook } = await import('../../../server/src/services/spreadsheetService.js');
+const { buildWorkbook } = await import('../../../src/services/spreadsheetService.js');
 
 export async function writeReconciliationReport({
   mode,

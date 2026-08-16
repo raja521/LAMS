@@ -34,12 +34,8 @@ const userSchema = new mongoose.Schema(
       default: [],
     },
 
-    /** Set only for local sign-in. Entra ID accounts have no password here. */
+    /** Never selected by default — ask for it explicitly with .select('+passwordHash'). */
     passwordHash: { type: String, select: false },
-
-    authProvider: { type: String, enum: ['local', 'azure-ad'], required: true, default: 'local' },
-    /** Entra ID object id (`oid`), when the account came from Microsoft. */
-    externalId: { type: String, index: true, sparse: true },
 
     isActive: { type: Boolean, default: true, index: true },
     lastLoginAt: { type: Date },

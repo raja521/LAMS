@@ -1,9 +1,9 @@
 /**
  * Browser-side environment contract.
  *
- * Vite only inlines names beginning with VITE_. A missing required value throws
- * immediately with the variable named, rather than silently rendering a broken
- * screen. Nothing here has a hard-coded fallback.
+ * Vite only inlines names beginning with VITE_. Only the API address is
+ * required — without it the app has nothing to talk to. Everything else falls
+ * back to a working default so a fresh clone runs straight away.
  */
 const raw = import.meta.env;
 
@@ -12,8 +12,7 @@ function required(name) {
   if (value === undefined || String(value).trim() === '') {
     throw new Error(
       `LAMS cannot start: ${name} is not set.\n` +
-        'Copy .env.example to .env at the repository root and set it. ' +
-        'No default is applied for this setting by design.'
+        'Copy .env.example to .env inside the client folder and set it.'
     );
   }
   return String(value).trim();
@@ -24,8 +23,8 @@ function optional(name, fallback) {
   return value === undefined || String(value).trim() === '' ? fallback : String(value).trim();
 }
 
-function requiredList(name) {
-  return required(name)
+function list(name, fallback) {
+  return optional(name, fallback)
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
@@ -38,24 +37,21 @@ function bool(name, fallback) {
 }
 
 /** "44.9778,-93.2650" → [44.9778, -93.2650] */
-function requiredLatLng(name) {
-  const parts = required(name).split(',').map((s) => Number(s.trim()));
+function latLng(name, fallback) {
+  const parts = optional(name, fallback).split(',').map((s) => Number(s.trim()));
   if (parts.length !== 2 || parts.some(Number.isNaN)) {
     throw new Error(`LAMS cannot start: ${name} must be "latitude,longitude" — received "${raw[name]}".`);
   }
   return parts;
 }
 
-const mapProvider = required('VITE_MAP_PROVIDER');
+const mapProvider = optional('VITE_MAP_PROVIDER', 'sample');
 
 const env = Object.freeze({
-  appName: required('VITE_APP_NAME'),
+  appName: optional('VITE_APP_NAME', 'LAMS'),
   apiBaseUrl: required('VITE_API_BASE_URL').replace(/\/$/, ''),
-  /** Display-only. The server decides which providers are actually enabled. */
+  /** Display-only, shown in the header and on the sign-in screen. */
   orgName: optional('VITE_ORG_NAME', ''),
-  authProvider: optional('VITE_AUTH_PROVIDER', 'local'),
-  azureClientId: optional('VITE_AZURE_AD_CLIENT_ID', ''),
-  azureTenantId: optional('VITE_AZURE_AD_TENANT_ID', ''),
 
   /**
    * Map settings. Nothing about the basemap, the layers or the service URL is
@@ -64,12 +60,12 @@ const env = Object.freeze({
    */
   map: Object.freeze({
     provider: mapProvider,
-    basemapUrl: required('VITE_MAP_BASEMAP_URL'),
-    basemapAttribution: required('VITE_MAP_BASEMAP_ATTRIBUTION'),
-    defaultCenter: requiredLatLng('VITE_MAP_DEFAULT_CENTER'),
-    defaultZoom: Number(required('VITE_MAP_DEFAULT_ZOOM')),
-    maxZoom: Number(required('VITE_MAP_MAX_ZOOM')),
-    layers: requiredList('VITE_MAP_LAYERS'),
+    basemapUrl: optional('VITE_MAP_BASEMAP_URL', 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
+    basemapAttribution: optional('VITE_MAP_BASEMAP_ATTRIBUTION', '© OpenStreetMap contributors'),
+    defaultCenter: latLng('VITE_MAP_DEFAULT_CENTER', '44.9778,-93.2650'),
+    defaultZoom: Number(optional('VITE_MAP_DEFAULT_ZOOM', '11')),
+    maxZoom: Number(optional('VITE_MAP_MAX_ZOOM', '19')),
+    layers: list('VITE_MAP_LAYERS', 'parcels,boundaries'),
     // Required in practice only when the provider is arcgis; the server enforces
     // its own equivalents, so a blank value here is not fatal for sample data.
     apiKey: optional('VITE_MAP_API_KEY', ''),

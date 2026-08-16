@@ -22,7 +22,6 @@ const TEST_ENV = {
   JWT_ISSUER: 'lams-api-test',
   JWT_AUDIENCE: 'lams-client-test',
   BCRYPT_SALT_ROUNDS: '4', // fast on purpose; production uses the .env value
-  AUTH_PROVIDER: 'local',
   DEFAULT_USER_ROLE: 'read_only',
   STORAGE_PROVIDER: 'local',
   STORAGE_LOCAL_PATH: './uploads-test',
@@ -30,7 +29,7 @@ const TEST_ENV = {
   LOG_LEVEL: 'error',
 
   // Document generation
-  TEMPLATE_DIR: './server/templates',
+  TEMPLATE_DIR: './templates',
   DOC_ORG_NAME: 'Test District',
   DOC_ORG_DIVISION: 'Land Acquisition and Management',
   DOC_ORG_ADDRESS: '1 Test Road, Testville, ST 00000',
@@ -53,7 +52,7 @@ const TEST_ENV = {
 
   // GIS
   GIS_PROVIDER: 'sample',
-  GIS_SAMPLE_DATA_PATH: './server/sample-data/parcels.geojson',
+  GIS_SAMPLE_DATA_PATH: './sample-data/parcels.geojson',
 
   // Feature toggles
   FEATURE_MAP: 'true',
@@ -131,7 +130,7 @@ export async function createUser({
   const { User } = await import('../../src/models/index.js');
   const { signAccessToken } = await import('../../src/services/tokenService.js');
 
-  const user = new User({ firstName, lastName, email, role, modules, isActive, authProvider: 'local' });
+  const user = new User({ firstName, lastName, email, role, modules, isActive});
   await user.setPassword(password);
   await user.save();
 

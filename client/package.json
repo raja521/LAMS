@@ -1,8 +1,12 @@
 {
-  "name": "@lams/client",
+  "name": "lams-client",
   "version": "0.1.0",
   "private": true,
+  "description": "LAMS web client — Land Acquisition and Management Software Solution",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",

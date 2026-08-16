@@ -1,11 +1,13 @@
 /**
  * Environment contract for the LAMS API.
  *
- * Ground rule: nothing in this application is configured in code. Every value
- * below comes from the environment. Required settings have NO fallback — if one
- * is missing the process refuses to start and names it. Only the handful of
- * operational tunables at the bottom carry defaults, and when one is applied it
- * is reported at boot so it is never a silent substitution.
+ * Ground rule: nothing in this application is configured in code — every value
+ * below comes from the environment. Only the three settings that genuinely
+ * cannot be guessed are required (the database URL and the two signing keys);
+ * everything else carries a working default so a fresh clone runs immediately.
+ *
+ * A default is never a silent substitution: each one applied is recorded and
+ * reported at boot.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -15,12 +17,12 @@ import dotenv from 'dotenv';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-/** Repository root — the single .env shared by the server, client and migrations. */
-export const ROOT_DIR = path.resolve(__dirname, '../../..');
+/** The server folder — this project's root. Every relative path resolves here. */
+export const SERVER_ROOT = path.resolve(__dirname, '../..');
 
-/** Load the root .env once. Real process env always wins over the file. */
+/** Load server/.env once. Real process env always wins over the file. */
 export function loadDotEnv() {
-  const envPath = path.join(ROOT_DIR, '.env');
+  const envPath = path.join(SERVER_ROOT, '.env');
   if (fs.existsSync(envPath)) dotenv.config({ path: envPath });
   return envPath;
 }
@@ -40,9 +42,8 @@ class EnvValidationError extends Error {
       'LAMS cannot start: the environment is incomplete.\n\n' +
         `${problems.length} problem${problems.length === 1 ? '' : 's'} found in your environment:\n` +
         `${lines.join('\n')}\n\n` +
-        'Fix: copy .env.example to .env and set the values listed above.\n' +
-        '     cp .env.example .env\n' +
-        'No default is applied for these settings by design.\n'
+        'Fix: copy server/.env.example to server/.env and set the values listed above.\n' +
+        '     cd server && cp .env.example .env\n'
     );
     this.name = 'EnvValidationError';
     this.problems = problems;
@@ -84,34 +85,43 @@ function required(name, { description, validate, allowed } = {}) {
   return value;
 }
 
-/** Required only when `condition` is true — e.g. Azure settings when Azure is on. */
+/** Required only when `condition` is true — e.g. S3 settings when S3 is chosen. */
 function requiredWhen(condition, name, opts = {}) {
   if (!condition) return raw(name);
   return required(name, opts);
 }
 
-/** An operational tunable. Applying a default is recorded and reported at boot. */
-function optional(name, fallback, { parse = (v) => v } = {}) {
+/** A setting with a documented default. Applying the default is recorded. */
+function optional(name, fallback, { allowed, parse = (v) => v } = {}) {
+  const value = raw(name);
+  if (value === undefined) {
+    defaulted.push(`${name}=${fallback}`);
+    return parse(fallback);
+  }
+  if (allowed && !allowed.includes(value)) {
+    fail(name, `must be one of: ${allowed.join(', ')} (received "${value}").`);
+    return parse(fallback);
+  }
+  return parse(value);
+}
+
+function optionalInt(name, fallback, { min, max } = {}) {
+  const value = optional(name, fallback, { parse: Number });
+  if (!Number.isInteger(value)) return fail(name, `must be a whole number (received "${raw(name)}").`);
+  if (min !== undefined && value < min) return fail(name, `must be at least ${min} (received ${value}).`);
+  if (max !== undefined && value > max) return fail(name, `must be at most ${max} (received ${value}).`);
+  return value;
+}
+
+const TRUTHY = ['1', 'true', 'yes', 'on'];
+
+function optionalBool(name, fallback) {
   const value = raw(name);
   if (value === undefined) {
     defaulted.push(`${name}=${fallback}`);
     return fallback;
   }
-  return parse(value);
-}
-
-function asInt(name, value, { min, max } = {}) {
-  if (value === undefined) return undefined;
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed)) return fail(name, `must be a whole number (received "${value}").`);
-  if (min !== undefined && parsed < min) return fail(name, `must be at least ${min} (received ${parsed}).`);
-  if (max !== undefined && parsed > max) return fail(name, `must be at most ${max} (received ${parsed}).`);
-  return parsed;
-}
-
-function asBool(value, fallback) {
-  if (value === undefined) return fallback;
-  return ['1', 'true', 'yes', 'on'].includes(String(value).toLowerCase());
+  return TRUTHY.includes(value.toLowerCase());
 }
 
 function asList(value) {
@@ -120,6 +130,14 @@ function asList(value) {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
+}
+
+/**
+ * Every path setting resolves against SERVER_ROOT, so behaviour never depends on
+ * which directory node happened to be launched from.
+ */
+function resolvePath(value) {
+  return value ? path.resolve(SERVER_ROOT, value) : undefined;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -131,17 +149,15 @@ function build() {
   defaulted.length = 0;
 
   // --- Runtime -------------------------------------------------------------
-  const nodeEnv = required('NODE_ENV', {
-    description: 'One of: development, test, production.',
+  const nodeEnv = optional('NODE_ENV', 'development', {
     allowed: ['development', 'test', 'production'],
   });
-  const port = asInt('PORT', required('PORT', { description: 'TCP port for the API, e.g. 4000.' }), {
-    min: 1,
-    max: 65535,
-  });
-  const apiBaseUrl = required('API_BASE_URL', {
-    description: 'Public base URL of this API, e.g. http://localhost:4000.',
-    validate: (v) => (/^https?:\/\//.test(v) ? true : 'must start with http:// or https://.'),
+  const port = optionalInt('PORT', 4000, { min: 1, max: 65535 });
+  const apiBaseUrl = optional('API_BASE_URL', `http://localhost:${port}`, {
+    parse: (v) => {
+      if (!/^https?:\/\//.test(v)) fail('API_BASE_URL', 'must start with http:// or https://.');
+      return v.replace(/\/$/, '');
+    },
   });
 
   // --- Database ------------------------------------------------------------
@@ -149,16 +165,17 @@ function build() {
     description: 'MongoDB connection string, e.g. mongodb://127.0.0.1:27017/lams.',
     validate: (v) => (/^mongodb(\+srv)?:\/\//.test(v) ? true : 'must start with mongodb:// or mongodb+srv://.'),
   });
-  const mongoDbName = required('MONGODB_DB_NAME', { description: 'Database name, e.g. lams.' });
+  const mongoDbName = optional('MONGODB_DB_NAME', 'lams');
 
   // --- Front end -----------------------------------------------------------
-  const clientUrl = required('CLIENT_URL', {
-    description: 'Base URL of the React app, e.g. http://localhost:5173.',
-    validate: (v) => (/^https?:\/\//.test(v) ? true : 'must start with http:// or https://.'),
+  const clientUrl = optional('CLIENT_URL', 'http://localhost:5173', {
+    parse: (v) => {
+      if (!/^https?:\/\//.test(v)) fail('CLIENT_URL', 'must start with http:// or https://.');
+      return v.replace(/\/$/, '');
+    },
   });
-  const corsOrigins = asList(
-    required('CORS_ORIGINS', { description: 'Comma-separated list of allowed browser origins.' })
-  );
+  /* The client is deployed separately, so its origin must be allowed explicitly. */
+  const corsOrigins = asList(optional('CORS_ORIGINS', clientUrl));
 
   // --- Session security ----------------------------------------------------
   const jwtSecret = required('JWT_SECRET', {
@@ -174,71 +191,28 @@ function build() {
       return true;
     },
   });
-  const jwtExpiresIn = required('JWT_EXPIRES_IN', { description: 'Access token lifetime, e.g. 1h.' });
-  const jwtRefreshExpiresIn = required('JWT_REFRESH_EXPIRES_IN', {
-    description: 'Refresh token lifetime, e.g. 7d.',
-  });
-  const jwtIssuer = required('JWT_ISSUER', { description: 'Token issuer claim, e.g. lams-api.' });
-  const jwtAudience = required('JWT_AUDIENCE', { description: 'Token audience claim, e.g. lams-client.' });
-  const saltRounds = asInt(
-    'BCRYPT_SALT_ROUNDS',
-    required('BCRYPT_SALT_ROUNDS', { description: 'Password hashing work factor, 10-14 is typical.' }),
-    { min: 4, max: 20 }
-  );
+  const jwtExpiresIn = optional('JWT_EXPIRES_IN', '1h');
+  const jwtRefreshExpiresIn = optional('JWT_REFRESH_EXPIRES_IN', '7d');
+  const jwtIssuer = optional('JWT_ISSUER', 'lams-api');
+  const jwtAudience = optional('JWT_AUDIENCE', 'lams-client');
+  const saltRounds = optionalInt('BCRYPT_SALT_ROUNDS', 12, { min: 4, max: 20 });
 
-  // --- Login system --------------------------------------------------------
-  const providers = asList(
-    required('AUTH_PROVIDER', { description: 'Comma-separated sign-in methods: local, azure-ad.' })
-  );
-  const unknownProviders = providers.filter((p) => !['local', 'azure-ad'].includes(p));
-  if (unknownProviders.length) {
-    fail('AUTH_PROVIDER', `contains unsupported value(s): ${unknownProviders.join(', ')}. Use local and/or azure-ad.`);
-  }
-  if (providers.length === 0) {
-    fail('AUTH_PROVIDER', 'must enable at least one sign-in method (local and/or azure-ad).');
-  }
-  const azureEnabled = providers.includes('azure-ad');
-  const azure = {
-    enabled: azureEnabled,
-    tenantId: requiredWhen(azureEnabled, 'AZURE_AD_TENANT_ID', {
-      description: 'Entra ID directory (tenant) ID. Required because AUTH_PROVIDER includes azure-ad.',
-    }),
-    clientId: requiredWhen(azureEnabled, 'AZURE_AD_CLIENT_ID', {
-      description: 'Entra ID application (client) ID. Required because AUTH_PROVIDER includes azure-ad.',
-    }),
-    clientSecret: requiredWhen(azureEnabled, 'AZURE_AD_CLIENT_SECRET', {
-      description: 'Entra ID client secret. Required because AUTH_PROVIDER includes azure-ad.',
-    }),
-    redirectUri: requiredWhen(azureEnabled, 'AZURE_AD_REDIRECT_URI', {
-      description: 'OIDC callback URL registered in Entra ID.',
-    }),
-    authority: requiredWhen(azureEnabled, 'AZURE_AD_AUTHORITY', {
-      description: 'Entra ID authority host, e.g. https://login.microsoftonline.com.',
-    }),
-    scopes: asList(raw('AZURE_AD_SCOPES') ?? 'openid,profile,email'),
-    groupRoleMap: {
-      [ROLES.ADMIN]: raw('AZURE_AD_ADMIN_GROUP_ID'),
-      [ROLES.MODULE_EDITOR]: raw('AZURE_AD_EDITOR_GROUP_ID'),
-      [ROLES.READ_ONLY]: raw('AZURE_AD_READONLY_GROUP_ID'),
-    },
-  };
-  const defaultRole = required('DEFAULT_USER_ROLE', {
-    description: `Role for a new user. One of: ${ROLE_VALUES.join(', ')}.`,
-    allowed: ROLE_VALUES,
-  });
+  // --- Accounts ------------------------------------------------------------
+  /*
+   * The role an administrator gets by default when creating a user. Public
+   * self-registration deliberately ignores this and always uses read_only —
+   * see the register route.
+   */
+  const defaultRole = optional('DEFAULT_USER_ROLE', ROLES.READ_ONLY, { allowed: ROLE_VALUES });
+  const minPasswordLength = optionalInt('MIN_PASSWORD_LENGTH', 12, { min: 8, max: 128 });
+  const allowRegistration = optionalBool('ALLOW_REGISTRATION', true);
 
   // --- File storage --------------------------------------------------------
-  const storageProvider = required('STORAGE_PROVIDER', {
-    description: 'Where documents are stored. One of: local, s3.',
-    allowed: ['local', 's3'],
-  });
+  const storageProvider = optional('STORAGE_PROVIDER', 'local', { allowed: ['local', 's3'] });
   const isS3 = storageProvider === 's3';
-  const isLocalStorage = storageProvider === 'local';
   const storage = {
     provider: storageProvider,
-    localPath: requiredWhen(isLocalStorage, 'STORAGE_LOCAL_PATH', {
-      description: 'Directory for uploads. Required because STORAGE_PROVIDER=local.',
-    }),
+    localPath: resolvePath(optional('STORAGE_LOCAL_PATH', './uploads')),
     s3: {
       bucket: requiredWhen(isS3, 'S3_BUCKET', {
         description: 'Bucket name. Required because STORAGE_PROVIDER=s3.',
@@ -253,27 +227,21 @@ function build() {
         description: 'Secret access key. Required because STORAGE_PROVIDER=s3.',
       }),
       endpoint: raw('S3_ENDPOINT') ?? null,
-      forcePathStyle: asBool(raw('S3_FORCE_PATH_STYLE'), false),
+      forcePathStyle: optionalBool('S3_FORCE_PATH_STYLE', false),
     },
-    maxUploadBytes: asInt(
-      'MAX_UPLOAD_BYTES',
-      required('MAX_UPLOAD_BYTES', { description: 'Maximum upload size in bytes, e.g. 26214400.' }),
-      { min: 1 }
-    ),
+    maxUploadBytes: optionalInt('MAX_UPLOAD_BYTES', 26214400, { min: 1 }),
   };
 
   // --- Document generation -------------------------------------------------
-  const templateDir = required('TEMPLATE_DIR', {
-    description: 'Directory holding the editable document/checklist/scoring templates.',
-  });
+  const templateDir = resolvePath(optional('TEMPLATE_DIR', './templates'));
   const documents = {
-    templateDir: templateDir ? path.resolve(ROOT_DIR, templateDir) : undefined,
+    templateDir,
     org: {
-      name: required('DOC_ORG_NAME', { description: 'Organization name printed on every document.' }),
-      division: required('DOC_ORG_DIVISION', { description: 'Division name printed under the organization.' }),
-      address: required('DOC_ORG_ADDRESS', { description: 'Address printed in the letterhead.' }),
+      name: optional('DOC_ORG_NAME', 'Example Conservation District'),
+      division: optional('DOC_ORG_DIVISION', 'Land Division'),
+      address: optional('DOC_ORG_ADDRESS', '100 Main Street'),
     },
-    footerText: required('DOC_FOOTER_TEXT', { description: 'Footer line printed on every document.' }),
+    footerText: optional('DOC_FOOTER_TEXT', 'Generated by LAMS'),
     locale: optional('DOC_LOCALE', 'en-US'),
     currency: optional('DOC_CURRENCY', 'USD'),
   };
@@ -281,51 +249,38 @@ function build() {
   // --- Automatic reference numbering ---------------------------------------
   const numbering = {
     prefixes: {
-      application: required('FILE_NUMBER_PREFIX', { description: 'Prefix for acquisition file numbers, e.g. LA.' }),
-      contract: required('CONTRACT_NUMBER_PREFIX', { description: 'Prefix for contract numbers, e.g. CT.' }),
-      purchaseOrder: required('PO_NUMBER_PREFIX', { description: 'Prefix for purchase order numbers, e.g. PO.' }),
-      document: required('DOCUMENT_NUMBER_PREFIX', { description: 'Prefix for generated document numbers.' }),
-      disposition: required('DISPOSITION_NUMBER_PREFIX', { description: 'Prefix for disposition case numbers.' }),
+      application: optional('FILE_NUMBER_PREFIX', 'LA'),
+      contract: optional('CONTRACT_NUMBER_PREFIX', 'CT'),
+      purchaseOrder: optional('PO_NUMBER_PREFIX', 'PO'),
+      document: optional('DOCUMENT_NUMBER_PREFIX', 'DOC'),
+      disposition: optional('DISPOSITION_NUMBER_PREFIX', 'LD'),
     },
-    pad: asInt(
-      'NUMBER_SEQUENCE_PAD',
-      required('NUMBER_SEQUENCE_PAD', { description: 'How many digits to pad sequence numbers to, e.g. 5.' }),
-      { min: 1, max: 12 }
-    ),
-    scope: required('NUMBER_SEQUENCE_SCOPE', {
-      description: 'Whether sequences restart each year. One of: yearly, never.',
-      allowed: ['yearly', 'never'],
-    }),
+    pad: optionalInt('NUMBER_SEQUENCE_PAD', 5, { min: 1, max: 12 }),
+    scope: optional('NUMBER_SEQUENCE_SCOPE', 'yearly', { allowed: ['yearly', 'never'] }),
   };
 
   // --- Application intake --------------------------------------------------
-  const intakeSource = required('INTAKE_SOURCE', {
-    description: 'Where new land applications arrive from. One of: simulated, webhook.',
-    allowed: ['simulated', 'webhook'],
-  });
+  const intakeSource = optional('INTAKE_SOURCE', 'simulated', { allowed: ['simulated', 'webhook'] });
+  const isWebhookIntake = intakeSource === 'webhook';
   const intake = {
     source: intakeSource,
-    webhookSecret: required('INTAKE_WEBHOOK_SECRET', {
-      description: 'Shared secret the form system signs intake posts with.',
-      validate: (v) => (v.length >= 8 ? true : 'must be at least 8 characters.'),
-    }),
-    formSystemUrl: requiredWhen(intakeSource === 'webhook', 'INTAKE_FORM_SYSTEM_URL', {
+    webhookSecret: isWebhookIntake
+      ? required('INTAKE_WEBHOOK_SECRET', {
+          description: 'Shared secret the form system signs intake posts with. Required because INTAKE_SOURCE=webhook.',
+          validate: (v) => (v.length >= 8 ? true : 'must be at least 8 characters.'),
+        })
+      : optional('INTAKE_WEBHOOK_SECRET', 'simulated-intake-not-in-use'),
+    formSystemUrl: requiredWhen(isWebhookIntake, 'INTAKE_FORM_SYSTEM_URL', {
       description: 'URL of the online form system. Required because INTAKE_SOURCE=webhook.',
     }),
   };
 
   // --- Mapping / GIS -------------------------------------------------------
-  const gisProvider = required('GIS_PROVIDER', {
-    description: 'Source of parcel geometry. One of: sample, arcgis.',
-    allowed: ['sample', 'arcgis'],
-  });
+  const gisProvider = optional('GIS_PROVIDER', 'sample', { allowed: ['sample', 'arcgis'] });
   const isArcgis = gisProvider === 'arcgis';
-  const gisSamplePath = requiredWhen(gisProvider === 'sample', 'GIS_SAMPLE_DATA_PATH', {
-    description: 'Path to the sample GeoJSON file. Required because GIS_PROVIDER=sample.',
-  });
   const gis = {
     provider: gisProvider,
-    samplePath: gisSamplePath ? path.resolve(ROOT_DIR, gisSamplePath) : undefined,
+    samplePath: resolvePath(optional('GIS_SAMPLE_DATA_PATH', './sample-data/parcels.geojson')),
     featureServiceUrl: requiredWhen(isArcgis, 'GIS_FEATURE_SERVICE_URL', {
       description: 'ArcGIS feature service URL. Required because GIS_PROVIDER=arcgis.',
     }),
@@ -340,26 +295,17 @@ function build() {
   /* ------------------------------------------------------------------------ */
   /* Connectors to the District's other systems                               */
   /*                                                                          */
-  /* Each one is independent and off unless explicitly switched on. Turning a  */
-  /* connector on makes its own settings required, so a half-configured        */
-  /* connection is refused at boot rather than failing silently in use.        */
+  /* Each one is off unless explicitly switched on. Turning a connector on     */
+  /* makes its own settings required, so a half-configured connection is       */
+  /* refused at boot rather than failing silently in use.                      */
   /* ------------------------------------------------------------------------ */
 
-  const connectorEnabled = (name) =>
-    asBool(
-      required(`CONNECTOR_${name}_ENABLED`, {
-        description: `Whether the ${name} connector is switched on. true or false.`,
-        allowed: ['true', 'false', '1', '0', 'yes', 'no', 'on', 'off'],
-      }),
-      false
-    );
-
-  const arcgisOn = connectorEnabled('ARCGIS');
-  const accufundOn = connectorEnabled('ACCUFUND');
-  const civicplusOn = connectorEnabled('CIVICPLUS');
-  const papervisionOn = connectorEnabled('PAPERVISION');
-  const perchOn = connectorEnabled('PERCH');
-  const legacyOn = connectorEnabled('LEGACY');
+  const arcgisOn = optionalBool('CONNECTOR_ARCGIS_ENABLED', false);
+  const accufundOn = optionalBool('CONNECTOR_ACCUFUND_ENABLED', false);
+  const civicplusOn = optionalBool('CONNECTOR_CIVICPLUS_ENABLED', false);
+  const papervisionOn = optionalBool('CONNECTOR_PAPERVISION_ENABLED', false);
+  const perchOn = optionalBool('CONNECTOR_PERCH_ENABLED', false);
+  const legacyOn = optionalBool('CONNECTOR_LEGACY_ENABLED', false);
 
   const connectors = {
     arcgis: {
@@ -375,31 +321,19 @@ function build() {
       }),
       // Even when true, only the whitelisted fields below may be written, and
       // geometry is excluded unconditionally by the connector itself.
-      allowAttributeWrite: asBool(raw('ARCGIS_ALLOW_ATTRIBUTE_WRITE'), false),
+      allowAttributeWrite: optionalBool('ARCGIS_ALLOW_ATTRIBUTE_WRITE', false),
       writableFields: asList(raw('ARCGIS_WRITABLE_FIELDS')),
       timeoutMs: Number(raw('ARCGIS_REQUEST_TIMEOUT_MS') ?? 15000),
     },
 
     accufund: {
       enabled: accufundOn,
-      exportDir: requiredWhen(accufundOn, 'ACCUFUND_EXPORT_DIR', {
-        description: 'Directory LAMS writes AccuFund export files to.',
-      }),
-      importDir: requiredWhen(accufundOn, 'ACCUFUND_IMPORT_DIR', {
-        description: 'Directory LAMS reads AccuFund response files from.',
-      }),
-      archiveDir: requiredWhen(accufundOn, 'ACCUFUND_ARCHIVE_DIR', {
-        description: 'Directory processed AccuFund files are moved to.',
-      }),
-      exportSchedule: requiredWhen(accufundOn, 'ACCUFUND_EXPORT_SCHEDULE', {
-        description: 'Cron expression for the export run, e.g. "0 2 * * *".',
-      }),
-      importSchedule: requiredWhen(accufundOn, 'ACCUFUND_IMPORT_SCHEDULE', {
-        description: 'Cron expression for the import run, e.g. "0 3 * * *".',
-      }),
-      filePrefix: requiredWhen(accufundOn, 'ACCUFUND_FILE_PREFIX', {
-        description: 'Prefix for exported file names.',
-      }),
+      exportDir: resolvePath(optional('ACCUFUND_EXPORT_DIR', './integration/accufund/outbound')),
+      importDir: resolvePath(optional('ACCUFUND_IMPORT_DIR', './integration/accufund/inbound')),
+      archiveDir: resolvePath(optional('ACCUFUND_ARCHIVE_DIR', './integration/accufund/archive')),
+      exportSchedule: optional('ACCUFUND_EXPORT_SCHEDULE', '0 2 * * *'),
+      importSchedule: optional('ACCUFUND_IMPORT_SCHEDULE', '0 3 * * *'),
+      filePrefix: optional('ACCUFUND_FILE_PREFIX', 'lams'),
       delimiter: raw('ACCUFUND_CSV_DELIMITER') ?? ',',
       fundCode: raw('ACCUFUND_FUND_CODE') ?? '',
       timezone: raw('ACCUFUND_TIMEZONE') ?? raw('SCHEDULER_TIMEZONE') ?? 'UTC',
@@ -420,8 +354,8 @@ function build() {
         description: 'Cron expression for polling, e.g. "*/15 * * * *".',
       }),
       fieldMapFile: raw('CIVICPLUS_FIELD_MAP_FILE')
-        ? path.resolve(ROOT_DIR, raw('CIVICPLUS_FIELD_MAP_FILE'))
-        : path.join(templateDir ? path.resolve(ROOT_DIR, templateDir) : '', 'connectors/civicplus-field-map.json'),
+        ? resolvePath(raw('CIVICPLUS_FIELD_MAP_FILE'))
+        : path.join(templateDir, 'connectors/civicplus-field-map.json'),
       timeoutMs: Number(raw('CIVICPLUS_REQUEST_TIMEOUT_MS') ?? 15000),
     },
 
@@ -463,37 +397,30 @@ function build() {
 
   // --- Reporting and scheduling --------------------------------------------
   const scheduler = {
-    enabled: asBool(
-      required('SCHEDULER_ENABLED', { description: 'Whether background schedules run on this instance.' }),
-      true
-    ),
-    timezone: raw('SCHEDULER_TIMEZONE') ?? 'UTC',
+    enabled: optionalBool('SCHEDULER_ENABLED', true),
+    timezone: optional('SCHEDULER_TIMEZONE', 'UTC'),
   };
 
-  const reportOutputDirRaw = required('REPORT_OUTPUT_DIR', {
-    description: 'Directory scheduled report output is written to.',
-  });
   const reporting = {
-    outputDir: reportOutputDirRaw ? path.resolve(ROOT_DIR, reportOutputDirRaw) : undefined,
-    monthlySchedule: required('REPORT_MONTHLY_SCHEDULE', {
-      description: 'Cron expression for the monthly report run, e.g. "0 6 1 * *".',
-    }),
-    retentionDays: asInt('REPORT_RETENTION_DAYS', raw('REPORT_RETENTION_DAYS') ?? '365', { min: 1 }),
-    maxRows: asInt('REPORT_MAX_ROWS', raw('REPORT_MAX_ROWS') ?? '50000', { min: 1 }),
+    outputDir: resolvePath(optional('REPORT_OUTPUT_DIR', './reports')),
+    monthlySchedule: optional('REPORT_MONTHLY_SCHEDULE', '0 6 1 * *'),
+    retentionDays: optionalInt('REPORT_RETENTION_DAYS', 365, { min: 1 }),
+    maxRows: optionalInt('REPORT_MAX_ROWS', 50000, { min: 1 }),
   };
 
   // --- Feature toggles -----------------------------------------------------
   const features = {
-    map: asBool(raw('FEATURE_MAP'), true),
-    documentGeneration: asBool(raw('FEATURE_DOCUMENT_GENERATION'), true),
-    timber: asBool(raw('FEATURE_TIMBER'), true),
+    map: optionalBool('FEATURE_MAP', true),
+    documentGeneration: optionalBool('FEATURE_DOCUMENT_GENERATION', true),
+    timber: optionalBool('FEATURE_TIMBER', true),
   };
 
-  // --- Operational tunables (documented defaults, reported at boot) ---------
+  // --- Operational tunables ------------------------------------------------
   const logLevel = optional('LOG_LEVEL', 'info');
-  const rateLimitWindowMs = optional('RATE_LIMIT_WINDOW_MS', 900000, { parse: Number });
-  const rateLimitMax = optional('RATE_LIMIT_MAX', 300, { parse: Number });
-  const authRateLimitMax = optional('AUTH_RATE_LIMIT_MAX', 10, { parse: Number });
+  const rateLimitWindowMs = optionalInt('RATE_LIMIT_WINDOW_MS', 900000, { min: 1000 });
+  const rateLimitMax = optionalInt('RATE_LIMIT_MAX', 300, { min: 1 });
+  const authRateLimitMax = optionalInt('AUTH_RATE_LIMIT_MAX', 10, { min: 1 });
+  const registerRateLimitMax = optionalInt('REGISTER_RATE_LIMIT_MAX', 5, { min: 1 });
 
   if (problems.length) throw new EnvValidationError(problems);
 
@@ -507,10 +434,9 @@ function build() {
     clientUrl,
     corsOrigins,
     auth: Object.freeze({
-      providers,
-      localEnabled: providers.includes('local'),
-      azure: Object.freeze(azure),
       defaultRole,
+      minPasswordLength,
+      allowRegistration,
       jwt: Object.freeze({
         secret: jwtSecret,
         refreshSecret: jwtRefreshSecret,
@@ -535,6 +461,7 @@ function build() {
       windowMs: rateLimitWindowMs,
       max: rateLimitMax,
       authMax: authRateLimitMax,
+      registerMax: registerRateLimitMax,
     }),
     defaultsApplied: Object.freeze([...defaulted]),
   });
@@ -562,14 +489,15 @@ if (process.argv.includes('--check')) {
   console.log(`  NODE_ENV        ${config.nodeEnv}`);
   console.log(`  PORT            ${config.port}`);
   console.log(`  MONGODB_URI     ${config.db.uri.replace(/\/\/[^@]*@/, '//***:***@')}`);
-  console.log(`  AUTH_PROVIDER   ${config.auth.providers.join(', ')}`);
-  console.log(`  STORAGE         ${config.storage.provider}`);
+  console.log(`  MONGODB_DB_NAME ${config.db.name}`);
+  console.log(`  CLIENT_URL      ${config.clientUrl}`);
+  console.log(`  CORS_ORIGINS    ${config.corsOrigins.join(', ')}`);
+  console.log(`  REGISTRATION    ${config.auth.allowRegistration ? 'open' : 'closed'}`);
+  console.log(`  STORAGE         ${config.storage.provider} (${config.storage.localPath})`);
   const on = Object.entries(config.connectors)
     .filter(([, connector]) => connector.enabled)
     .map(([name]) => name);
   console.log(`  CONNECTORS ON   ${on.length ? on.join(', ') : '(none)'}`);
   console.log(`  SCHEDULER       ${config.scheduler.enabled ? `on (${config.scheduler.timezone})` : 'off'}`);
-  if (config.defaultsApplied.length) {
-    console.log(`  defaults used   ${config.defaultsApplied.join(', ')}`);
-  }
+  console.log(`  defaults used   ${config.defaultsApplied.length} setting(s) not set in .env`);
 }

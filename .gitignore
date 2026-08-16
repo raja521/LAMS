@@ -1,4 +1,6 @@
-# Environment — the real .env must never be committed
+# Environment — the real .env files must never be committed.
+# These patterns have no slash, so they match at any depth: client/.env and
+# server/.env are both covered, while the two .env.example files stay.
 .env
 .env.*
 !.env.example
@@ -10,22 +12,23 @@ node_modules/
 # Build output
 dist/
 build/
-client/dist/
 
 # Logs
 *.log
 npm-debug.log*
 logs/
 
-# Local uploads / scratch
-uploads/
+# Generated at run time by the server
+server/uploads/
+server/uploads-test/
+server/reports/
+server/reports-test/
+server/integration/
+server/scripts/import/reports/*.xlsx
+
+# Scratch
 tmp/
 coverage/
-
-# Generated run output (reports, migration dry-runs, test uploads)
-/reports/
-migrations/import/reports/*.xlsx
-server/uploads-test/
 
 # Editor / OS
 .DS_Store

@@ -1,12 +1,10 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
-import config, { ROOT_DIR } from './config/env.js';
+import config from './config/env.js';
 import routes from './routes/index.js';
 import { errorHandler, notFoundHandler } from './middleware/error.js';
 import logger from './utils/logger.js';
@@ -23,7 +21,16 @@ export function createApp() {
       origin(origin, callback) {
         // Same-origin and server-to-server calls arrive without an Origin header.
         if (!origin || config.corsOrigins.includes(origin)) return callback(null, true);
-        return callback(new Error(`Origin ${origin} is not in CORS_ORIGINS.`));
+        /*
+         * The client is deployed separately, so an unlisted origin is a very
+         * likely first-run mistake. Refuse by withholding the header — which is
+         * what actually stops the browser — and say so in the log, rather than
+         * throwing, which surfaced as a confusing 500.
+         */
+        logger.warn(
+          `Refused a browser request from ${origin}. Add it to CORS_ORIGINS if that address is your client.`
+        );
+        return callback(null, false);
       },
       credentials: true,
     })
@@ -59,27 +66,10 @@ export function createApp() {
   app.use('/api', routes);
 
   /*
-   * In production the built front end is served by this same process, so a
-   * deployment is one container behind one URL. In development Vite serves it
-   * instead, and this is skipped.
+   * This process serves the API only. The React client is a separate project
+   * with its own deployment, so it reaches the API across origins — which is
+   * what CORS_ORIGINS above is for.
    */
-  if (config.isProduction) {
-    const clientDir = path.resolve(ROOT_DIR, 'client/dist');
-    if (fs.existsSync(clientDir)) {
-      app.use(express.static(clientDir, { index: false, maxAge: '1h' }));
-
-      // Anything that is not an API route is handed to the single-page app so
-      // that a deep link like /management/parcels/123 works on a hard refresh.
-      app.get(/^\/(?!api\/).*/, (_req, res) => {
-        res.sendFile(path.join(clientDir, 'index.html'));
-      });
-      logger.info(`Serving the built front end from ${clientDir}`);
-    } else {
-      logger.warn(
-        `No built front end found at ${clientDir}. Run "npm run build" — the API will run, but nothing will serve the screens.`
-      );
-    }
-  }
 
   app.use(notFoundHandler);
   app.use(errorHandler);

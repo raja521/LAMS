@@ -133,12 +133,12 @@ cannot alter PERCH data even by mistake.
 
 **What was assumed.** An export as CSV or Excel, with one row per parcel, and the
 column names in
-`migrations/import/mappings/legacy-land-tracker.json`.
+`server/scripts/import/mappings/legacy-land-tracker.json`.
 
 **What needs confirming — with whoever maintains the current system:**
 
 - **A real export.** The mapping was written against a representative sample
-  (`migrations/import/samples/legacy-export.csv`), not the District's real file.
+  (`server/scripts/import/samples/legacy-export.csv`), not the District's real file.
   The column names in the mapping file will need adjusting — that is a text edit,
   not a code change, and it is the expected first step.
 - Whether one row really is one parcel, or whether parcels repeat across rows.
@@ -159,25 +159,31 @@ report before anyone runs the second command.
 
 ## 7. Sign-in
 
-**What was assumed.** Microsoft Entra ID (Azure AD) with the standard
-authorization-code flow, and group membership mapped onto the three permission
-levels.
+**What was decided.** LAMS holds its own accounts: email and password, bcrypt
+hashed. Anyone may create an account from the sign-in screen, and a new account
+is always **Read Only** — an administrator promotes it afterwards.
 
-**What needs confirming — with the District's IT:**
+Microsoft Entra ID (Azure AD) sign-in was built earlier and has since been
+removed at the District's request. Nothing in the codebase depends on it.
 
-- Tenant id, client id, client secret, and a registered redirect URI.
-- The group object-ids for Administrator / Module Editor / Read Only
-  (`AZURE_AD_ADMIN_GROUP_ID` and friends). Without these, everyone who signs in
-  gets `DEFAULT_USER_ROLE`.
-- Whether the app registration will be configured to emit the `groups` claim —
-  it is not on by default in Entra ID, and role mapping depends on it.
-- **This path has not been exercised against a real tenant.** The code exchange
-  is a back-channel call authenticated with the client secret, so the identity
-  token arrives over TLS from Microsoft directly. If id_tokens are ever accepted
-  from any other path, add JWKS signature verification first.
+**What needs confirming — with the District:**
 
-**Until this is confirmed:** local email-and-password sign-in works fully and is
-covered by tests.
+- **Should sign-ups stay open?** Right now anyone who reaches the address can
+  create a read-only account. That grants no ability to change anything, but it
+  does let an outsider see District land records. If the system will be reachable
+  from the public internet, this is the setting to think hardest about. Set
+  `ALLOW_REGISTRATION=false` to close it and have administrators create every
+  account by hand.
+- **Password policy.** The only rule enforced today is a minimum length
+  (`MIN_PASSWORD_LENGTH`, 12 by default). There is no expiry, no complexity rule
+  and no reuse check. Confirm whether District policy requires more.
+- **Password reset.** There is no "forgot my password" flow — an administrator
+  sets a new password. If self-service reset is wanted, it needs an email
+  service, which the District has not yet nominated.
+
+**Not an open question:** sign-in, sign-up and the three permission levels are
+fully covered by tests, including that a sign-up cannot grant itself a higher
+role.
 
 ---
 
@@ -192,7 +198,7 @@ covered by tests.
   one, or the nightly transfers and monthly reports will run more than once.
 - **HTTPS and reverse proxy.** The app trusts one proxy hop (`trust proxy` is 1).
   Adjust if it sits behind more.
-- **The MongoDB credentials currently in `.env`** were supplied during
+- **The MongoDB credentials currently in `server/.env`** were supplied during
   development and have been visible in a chat transcript. **Rotate them in Atlas
   before go-live.**
 - **Document retention.** Generated documents are kept indefinitely; scheduled

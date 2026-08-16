@@ -1,14 +1,25 @@
 {
-  "name": "@lams/server",
+  "name": "lams-server",
   "version": "0.1.0",
   "private": true,
+  "description": "LAMS API — Land Acquisition and Management Software Solution",
   "type": "module",
   "main": "src/server.js",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
     "test": "node --test --test-concurrency=1 \"tests/**/*.test.js\"",
-    "env:check": "node src/config/env.js --check"
+    "env:check": "node src/config/env.js --check",
+    "migrate": "node scripts/migrate.js up",
+    "migrate:status": "node scripts/migrate.js status",
+    "migrate:down": "node scripts/migrate.js down",
+    "seed": "node scripts/seed.js",
+    "import:dry-run": "node scripts/import/import.js --dry-run",
+    "import:apply": "node scripts/import/import.js --apply",
+    "secrets:check": "node scripts/check-secrets.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

@@ -8,7 +8,6 @@ export async function up({ db }) {
   await db.collection('users').createIndexes([
     { key: { email: 1 }, name: 'email_unique', unique: true },
     { key: { role: 1, isActive: 1 }, name: 'role_active' },
-    { key: { externalId: 1 }, name: 'external_id', sparse: true },
   ]);
 
   await db.collection('parcels').createIndexes([

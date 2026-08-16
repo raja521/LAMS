@@ -11,8 +11,8 @@ import path from 'node:path';
  *
  * No database or server is needed: the mapper and the reader are pure.
  */
-const { mapRow, validateColumns, toDate, toNumber } = await import('../../migrations/import/lib/mapper.js');
-const { readSource } = await import('../../migrations/import/lib/sourceReader.js');
+const { mapRow, validateColumns, toDate, toNumber } = await import('../scripts/import/lib/mapper.js');
+const { readSource } = await import('../scripts/import/lib/sourceReader.js');
 
 const parcelTarget = {
   model: 'Parcel',

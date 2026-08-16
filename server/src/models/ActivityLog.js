@@ -8,6 +8,7 @@ export const ACTIVITY_ACTIONS = Object.freeze([
   'create',
   'update',
   'delete',
+  'register',
   'login',
   'login_failed',
   'logout',

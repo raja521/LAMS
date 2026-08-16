@@ -16,11 +16,11 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const SCRIPTS_DIR = path.join(__dirname, 'scripts');
+const SCRIPTS_DIR = path.join(__dirname, 'migrations');
 const COLLECTION = '_migrations';
 
-const { default: config } = await import('../server/src/config/env.js');
-const { connectDatabase, disconnectDatabase } = await import('../server/src/config/db.js');
+const { default: config } = await import('../src/config/env.js');
+const { connectDatabase, disconnectDatabase } = await import('../src/config/db.js');
 const mongoose = (await import('mongoose')).default;
 
 async function listScripts() {

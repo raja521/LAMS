@@ -6,71 +6,108 @@ mapping, reporting and system connections that go around all three.
 
 **Stack:** MongoDB · Express · React (Vite) · Node.js · MUI
 
-**Companion documents**
+Two independent projects, each with its own dependencies and its own `.env`:
 
-| Document | What it is |
-|---|---|
-| [ENVIRONMENT.md](ENVIRONMENT.md) | Every one of the 134 settings, what it is for, and whether it is required. Generated from `.env.example`. |
-| [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md) | **Read before go-live.** What still needs confirming with the District, and who needs to answer it. |
+| Folder | What it is | Runs on |
+|---|---|---|
+| [`server/`](server/) | The API, the database models, and the one-time data tools | Node.js, port 4000 |
+| [`client/`](client/) | The React screens | Vite, port 5173 |
+
+They are not linked by a workspace or a build step — the client simply calls the
+API over HTTP, which means each can be deployed on its own.
+
+**Before go-live:** read [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md) — what still needs
+confirming with the District, and who needs to answer it.
 
 ---
 
 ## Ground rule: nothing is hard-coded
 
-Every value comes from the environment. Required settings have no fallback — the
-server refuses to start and names what is missing:
+Every value comes from the environment. Only the settings that genuinely cannot
+be guessed are required:
+
+| Project | Required | Everything else |
+|---|---|---|
+| `server/` | `MONGODB_URI`, `JWT_SECRET`, `JWT_REFRESH_SECRET` | Has a working default |
+| `client/` | `VITE_API_BASE_URL` | Has a working default |
+
+Miss one and the server refuses to start, naming it:
 
 ```
 LAMS cannot start: the environment is incomplete.
 
-2 problems found in your environment:
+1 problem found in your environment:
   • MONGODB_URI — is required but not set. MongoDB connection string, e.g. ...
-  • JWT_SECRET — is required but not set. Signing key for access tokens. ...
-
-No default is applied for these settings by design.
 ```
 
-The browser bundle does the same for its `VITE_*` values, at build time and at
-runtime. Only four operational tunables carry defaults, and each is reported in
-the startup log when applied — never a silent substitution.
+Every default that gets applied is counted in the startup log and listed by
+`npm run env:check`, so a default is never a silent substitution. Both
+`.env.example` files document every setting with its default.
 
-`npm run secrets:check` confirms nothing sensitive was written into the code or
-into anything that would be committed. It is expected to pass before release.
+`npm run secrets:check` (in `server/`) confirms nothing sensitive was written
+into the code or into anything that would be committed, across both projects.
 
 ---
 
 ## Getting started
 
-**Prerequisites:** Node.js 20+, and a reachable MongoDB (local or Atlas).
+**Prerequisites:** Node.js 20+, and a reachable MongoDB — either a local
+`mongod`, or a free MongoDB Atlas cluster. Tests need neither; they start their
+own in-memory MongoDB.
+
+Open two terminals.
+
+**Terminal 1 — the API**
 
 ```bash
-cp .env.example .env
-openssl rand -base64 48      # → JWT_SECRET
-openssl rand -base64 48      # → JWT_REFRESH_SECRET (must differ)
-
+cd server
+cp .env.example .env        # then set MONGODB_URI and the two JWT secrets
 npm install
-npm run env:check            # confirms the environment is complete
-npm run migrate              # creates the indexes
-npm run seed                 # creates the first administrator
-npm run dev                  # API and front end together
+npm run env:check           # confirms the settings before starting anything
+npm run migrate             # create the database indexes
+npm run dev                 # http://localhost:4000
 ```
 
-There is no built-in default account. `npm run seed` reads `SEED_ADMIN_EMAIL`,
-`SEED_ADMIN_PASSWORD`, `SEED_ADMIN_FIRST_NAME` and `SEED_ADMIN_LAST_NAME`, and
-refuses to run without them.
+Generate the two signing keys with `openssl rand -base64 48`, run twice. They
+must differ from each other.
+
+**Terminal 2 — the screens**
+
+```bash
+cd client
+cp .env.example .env        # the default points at http://localhost:4000/api
+npm install
+npm run dev                 # http://localhost:5173
+```
+
+Then open http://localhost:5173 and **Create an account**. The first account —
+like every self-created account — is read-only. To get an administrator:
+
+```bash
+cd server
+SEED_ADMIN_EMAIL=you@example.gov SEED_ADMIN_PASSWORD='a-long-passphrase' \
+  SEED_ADMIN_FIRST_NAME=Ada SEED_ADMIN_LAST_NAME=Lovelace npm run seed
+```
 
 ### Deploying
 
-Either hosting model works — cloud or the District's own server.
+The two folders deploy as two separate services — a Node web service for
+`server/`, and a static site for `client/` (its `npm run build` output in
+`client/dist`). Three settings tie them together:
 
-```bash
-npm run build && npm start   # one Node process serves the API and the screens
-# or
-docker compose up -d         # see docker-compose.yml
-```
+| Where | Setting | Value |
+|---|---|---|
+| `client` | `VITE_API_BASE_URL` | The API's public address **+ `/api`** |
+| `server` | `CORS_ORIGINS` | The client's public address, comma-separated for several |
+| `server` | `NODE_ENV` | `production` |
 
-Set `SCHEDULER_ENABLED=false` on all but one instance if you run more than one,
-so the nightly transfers and monthly reports run exactly once.
+`VITE_*` values are compiled into the JavaScript at build time, so changing one
+means rebuilding the client — restarting is not enough. The API exposes
+`/api/health` for a platform health check.
+
+Documents and generated reports are written to disk (`server/uploads`,
+`server/reports`), so a host with an ephemeral filesystem needs a persistent disk
+mounted there — or `STORAGE_PROVIDER=s3`.
 
 ---
 
@@ -137,10 +174,11 @@ under `server/templates/reports/`.
 
 ### Bringing the District's existing data across
 
-A separate, one-time tool in `migrations/import/` — deliberately not part of the
+A separate, one-time tool in `server/scripts/import/` — deliberately not part of the
 everyday application.
 
 ```bash
+cd server
 npm run import:dry-run    # writes to the practice database, produces the comparison report
 npm run import:apply      # the real database, only after the report is approved
 ```
@@ -153,7 +191,7 @@ npm run import:apply      # the real database, only after the report is approved
 - `--apply` **refuses to run** while any row has an error, unless `--force`.
 - Every record keeps its original identifier under `legacy.id`, so anything can
   be traced back to where it came from.
-- Field mapping is a JSON file (`migrations/import/mappings/`) — matching the
+- Field mapping is a JSON file (`server/scripts/import/mappings/`) — matching the
   District's real column names is a text edit, not a code change.
 - A row with the wrong number of columns is rejected and reported, rather than
   shifting every later value into the wrong field.
@@ -162,7 +200,10 @@ npm run import:apply      # the real database, only after the report is approved
 
 ## Sign-in and permissions
 
-Exactly the three levels the District asked for.
+Anyone can create an account from the sign-in screen. A new account is always
+**Read Only** — signing up grants no ability to change anything, and an
+administrator promotes it afterwards. Set `ALLOW_REGISTRATION=false` to close
+sign-ups entirely and create every account by hand instead.
 
 | Level | Read | Create / edit / delete | Manage users |
 |---|---|---|---|
@@ -173,25 +214,32 @@ Exactly the three levels the District asked for.
 - **The server is the authority.** Every route is guarded; for an existing record
   the module is read from the record itself. The client's greyed-out buttons are a
   courtesy — editing them in the browser changes what is drawn and nothing else.
+- The sign-up form fixes the new account's role in code rather than reading it
+  from `DEFAULT_USER_ROLE`, so the setting can never turn the public form into a
+  way of granting yourself the run of the system. A `role` sent in the request is
+  ignored.
 - **Roles are re-read on every request**, so a role change or a deactivation takes
   effect immediately rather than at token expiry.
-- The sign-in screen is a Microsoft-style organizational login. Which methods it
-  offers comes from `AUTH_PROVIDER` — local password, Microsoft Entra ID, or both.
-- Every create, edit, delete, sign-in, failed sign-in and refused attempt is
-  written to the activity log automatically by middleware, so a route handler
-  cannot forget to log.
+- Sign-in is email and password, held by LAMS. Passwords are bcrypt-hashed and
+  the hash is never returned by the API.
+- Every account created, create, edit, delete, sign-in, failed sign-in and refused
+  attempt is written to the activity log automatically by middleware, so a route
+  handler cannot forget to log.
 
 ---
 
 ## Tests
 
 ```bash
-npm test      # 91 tests
+cd server && npm test      # 99 tests
 ```
+
+No database is required — the suite starts its own in-memory MongoDB.
 
 | Area | What is covered |
 |---|---|
 | Login | Wrong passwords, deactivated accounts, forged and stale tokens, identical responses whether or not an address exists |
+| Sign-up | A new account is created and signed in; it lands on Read Only; a request smuggling `role: admin` still produces a read-only account and is refused from the admin area; duplicate addresses and short passwords rejected |
 | Permissions | Each of the three levels against each of the three modules, with data verified unchanged after a refused write |
 | Document generation | That the output is a real Word file — a zip package containing `word/document.xml` — filled from the record, not hard-coded |
 | Reference numbering | Format, and that concurrent submissions never receive the same number |
@@ -208,40 +256,58 @@ npm test      # 91 tests
 
 ```
 LAMS/
-├── client/                React front end (Vite + MUI)
+├── client/                    React front end (Vite + MUI)
+│   ├── .env.example
+│   ├── package.json
 │   └── src/{api,auth,components,config,layouts,pages}
+│
 ├── server/
+│   ├── .env.example
+│   ├── package.json
 │   ├── src/
-│   │   ├── config/        environment contract, permissions, database
-│   │   ├── connectors/    one self-contained file per external system
-│   │   ├── middleware/    authentication, permission gates, audit, errors
-│   │   ├── models/        Mongoose schemas
-│   │   ├── routes/        auth, the three modules, documents, gis, reports, integrations
-│   │   ├── services/      documents, spreadsheets, scoring, checklists, scheduling, GIS
+│   │   ├── config/            environment contract, permissions, database
+│   │   ├── connectors/        one self-contained file per external system
+│   │   ├── middleware/        authentication, permission gates, audit, errors
+│   │   ├── models/            Mongoose schemas
+│   │   ├── routes/            auth, the three modules, documents, gis, reports, integrations
+│   │   ├── services/          documents, spreadsheets, scoring, checklists, scheduling, GIS
 │   │   └── utils/
-│   ├── templates/         EDITABLE CONFIG — documents, checklists, scoring, prospectus, reports
-│   ├── sample-data/       sample GeoJSON, used until ArcGIS is connected
+│   ├── templates/             EDITABLE CONFIG — documents, checklists, scoring, prospectus, reports
+│   ├── sample-data/           sample GeoJSON, used until ArcGIS is connected
+│   ├── scripts/
+│   │   ├── migrate.js         schema migration runner
+│   │   ├── seed.js            create the first administrator
+│   │   ├── check-secrets.js   pre-release check, covers both projects
+│   │   ├── migrations/        the migration steps themselves
+│   │   └── import/            the one-time legacy data tool
 │   └── tests/
-├── migrations/
-│   ├── scripts/           schema migrations
-│   └── import/            the one-time data migration tool
-├── scripts/               secret check, environment doc generator
-├── .env.example           every setting, with placeholders
-└── ENVIRONMENT.md         the generated settings checklist
+│
+└── OPEN-QUESTIONS.md
 ```
+
+Paths inside `server/.env` resolve against the `server/` folder, so they do not
+depend on which directory you started node from.
 
 ---
 
 ## Commands
 
+Run in `server/`:
+
 | Command | Does |
 |---|---|
-| `npm run dev` | API and front end together |
-| `npm run env:check` | Validate the environment without starting anything |
+| `npm run dev` / `npm start` | The API, with / without file watching |
+| `npm run env:check` | Validate the settings without starting anything |
 | `npm test` | The full test suite |
-| `npm run build` / `npm start` | Build the front end / run in production |
 | `npm run migrate` · `npm run migrate:status` | Schema migrations |
 | `npm run seed` | Create the first administrator |
 | `npm run import:dry-run` · `npm run import:apply` | The one-time data migration |
 | `npm run secrets:check` | Confirm nothing sensitive is in the code |
-| `npm run docs:env` | Regenerate `ENVIRONMENT.md` from `.env.example` |
+
+Run in `client/`:
+
+| Command | Does |
+|---|---|
+| `npm run dev` | The screens, with hot reload |
+| `npm run build` | Production bundle into `client/dist` |
+| `npm run preview` | Serve the built bundle locally |

@@ -53,14 +53,20 @@ router.post(
   '/',
   asyncHandler(async (req, res) => {
     const { password, ...fields } = req.body ?? {};
-    const user = new User({ ...pick(fields, EDITABLE), authProvider: password ? 'local' : 'azure-ad' });
 
-    if (password) {
-      if (String(password).length < 12) {
-        throw ApiError.badRequest('Passwords must be at least 12 characters long.');
-      }
-      await user.setPassword(password);
+    // Every account signs in with a password, so one has to be set here —
+    // otherwise the account would be created unable to sign in at all.
+    if (!password) {
+      throw ApiError.badRequest('Set a password for the new user.');
     }
+    if (String(password).length < config.auth.minPasswordLength) {
+      throw ApiError.badRequest(
+        `Passwords must be at least ${config.auth.minPasswordLength} characters long.`
+      );
+    }
+
+    const user = new User(pick(fields, EDITABLE));
+    await user.setPassword(password);
     validateModules(user);
     await user.save();
 
@@ -88,8 +94,10 @@ router.patch(
     Object.assign(user, pick(req.body ?? {}, EDITABLE));
 
     if (req.body?.password) {
-      if (String(req.body.password).length < 12) {
-        throw ApiError.badRequest('Passwords must be at least 12 characters long.');
+      if (String(req.body.password).length < config.auth.minPasswordLength) {
+        throw ApiError.badRequest(
+          `Passwords must be at least ${config.auth.minPasswordLength} characters long.`
+        );
       }
       await user.setPassword(req.body.password);
     }

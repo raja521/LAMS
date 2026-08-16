@@ -10,12 +10,12 @@ export function AuthProvider({ children }) {
   const [authConfig, setAuthConfig] = useState(null);
   const [status, setStatus] = useState('loading'); // loading | authenticated | anonymous
 
-  /** Which sign-in methods exist comes from the server, never from the bundle. */
+  /** How sign-in behaves comes from the server, never from the bundle. */
   useEffect(() => {
     api
       .get('/auth/config')
       .then(setAuthConfig)
-      .catch(() => setAuthConfig({ providers: [], localEnabled: false, azureEnabled: false }));
+      .catch(() => setAuthConfig({ registrationOpen: false, minPasswordLength: 12 }));
   }, []);
 
   const loadSession = useCallback(async () => {
@@ -53,6 +53,16 @@ export function AuthProvider({ children }) {
     return session;
   }, []);
 
+  /** Creating an account signs you in straight away — the server returns a session. */
+  const register = useCallback(async (details) => {
+    const session = await api.post('/auth/register', details);
+    tokenStore.set(session);
+    setUser(session.user);
+    setCapabilities(session.capabilities);
+    setStatus('authenticated');
+    return session;
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await api.post('/auth/logout');
@@ -73,11 +83,12 @@ export function AuthProvider({ children }) {
       status,
       isAuthenticated: status === 'authenticated',
       login,
+      register,
       logout,
       reload: loadSession,
       can: (action, module) => canDo(capabilities, action, module),
     }),
-    [user, capabilities, authConfig, status, login, logout, loadSession]
+    [user, capabilities, authConfig, status, login, register, logout, loadSession]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

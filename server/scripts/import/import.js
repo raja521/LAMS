@@ -18,10 +18,10 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
-const { default: config, ROOT_DIR } = await import('../../server/src/config/env.js');
-const { connectDatabase, disconnectDatabase } = await import('../../server/src/config/db.js');
+const { default: config, SERVER_ROOT } = await import('../../src/config/env.js');
+const { connectDatabase, disconnectDatabase } = await import('../../src/config/db.js');
 const mongoose = (await import('mongoose')).default;
-const models = await import('../../server/src/models/index.js');
+const models = await import('../../src/models/index.js');
 
 const { readSource } = await import('./lib/sourceReader.js');
 const { mapRow, validateColumns } = await import('./lib/mapper.js');
@@ -51,10 +51,10 @@ if (missing.length) {
 
 const MODE = process.argv.includes('--apply') ? 'apply' : 'dry-run';
 const settings = {
-  sourceFile: path.resolve(ROOT_DIR, process.env.MIGRATION_SOURCE_FILE.trim()),
-  mappingFile: path.resolve(ROOT_DIR, process.env.MIGRATION_MAPPING_FILE.trim()),
+  sourceFile: path.resolve(SERVER_ROOT, process.env.MIGRATION_SOURCE_FILE.trim()),
+  mappingFile: path.resolve(SERVER_ROOT, process.env.MIGRATION_MAPPING_FILE.trim()),
   stagingDb: process.env.MIGRATION_STAGING_DB_NAME.trim(),
-  reportDir: path.resolve(ROOT_DIR, process.env.MIGRATION_REPORT_DIR.trim()),
+  reportDir: path.resolve(SERVER_ROOT, process.env.MIGRATION_REPORT_DIR.trim()),
   batch: process.env.MIGRATION_BATCH_LABEL.trim(),
 };
 

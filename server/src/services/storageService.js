@@ -82,7 +82,7 @@ async function s3Client() {
   } catch {
     throw new Error(
       'STORAGE_PROVIDER=s3 requires the AWS SDK. Install it with:\n' +
-        '  npm install @aws-sdk/client-s3 --workspace server'
+        '  cd server && npm install @aws-sdk/client-s3'
     );
   }
   const client = new sdk.S3Client({
