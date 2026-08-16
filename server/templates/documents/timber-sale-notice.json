@@ -1,0 +1,66 @@
+{
+  "id": "timber-sale-notice",
+  "name": "Timber Sale Notice",
+  "description": "Notice of a timber sale, including the standing inventory and the terms of the award.",
+  "documentType": "bid",
+  "module": "management",
+  "version": "1",
+  "titleTemplate": "Timber Sale Notice — {{activity.sale.saleNumber}}",
+  "blocks": [
+    { "type": "heading", "level": 1, "text": "TIMBER SALE NOTICE", "align": "center" },
+    { "type": "divider" },
+
+    {
+      "type": "keyValue",
+      "labelWidth": 30,
+      "items": [
+        { "label": "Sale number", "value": "{{activity.sale.saleNumber}}" },
+        { "label": "Document number", "value": "{{doc.number}}" },
+        { "label": "Parcel", "value": "{{parcel.parcelId}} — {{parcel.name}}" },
+        { "label": "County", "value": "{{parcel.county}}" },
+        { "label": "Sale area", "value": "{{activity.sale.acres | number}} acres" },
+        { "label": "Estimated volume", "value": "{{activity.sale.estimatedVolume | number}} {{activity.sale.volumeUnit}}" },
+        { "label": "Bid opening", "value": "{{activity.sale.bidOpeningDate | date}}" },
+        { "label": "Contract expiry", "value": "{{activity.sale.contractExpiry | date}}" }
+      ]
+    },
+
+    { "type": "heading", "level": 2, "text": "Standing inventory", "when": "inventory" },
+    {
+      "type": "keyValue",
+      "labelWidth": 30,
+      "when": "inventory",
+      "items": [
+        { "label": "Cruise date", "value": "{{inventory.inventory.cruiseDate | date}}" },
+        { "label": "Acres cruised", "value": "{{inventory.inventory.acresCruised | number}}" },
+        { "label": "Species composition", "value": "{{inventory.inventory.speciesComposition}}" },
+        { "label": "Volume per acre", "value": "{{inventory.inventory.volumePerAcre | number}} {{inventory.inventory.volumeUnit}}" },
+        { "label": "Total volume", "value": "{{inventory.inventory.totalVolume | number}} {{inventory.inventory.volumeUnit}}" }
+      ]
+    },
+
+    { "type": "heading", "level": 2, "text": "Terms" },
+    {
+      "type": "list",
+      "items": [
+        "Operations shall not begin until a pre-harvest meeting has been held and recorded.",
+        "All loads leaving the sale area must be ticketed and reported to {{org.division}}.",
+        "The purchaser is responsible for road and ditch condition on haul routes.",
+        "Reforestation obligations, where applicable, survive the close of the sale."
+      ]
+    },
+
+    { "type": "heading", "level": 2, "text": "Award", "when": "activity.sale.awardedAmount" },
+    {
+      "type": "keyValue",
+      "labelWidth": 30,
+      "when": "activity.sale.awardedAmount",
+      "items": [{ "label": "Awarded amount", "value": "{{activity.sale.awardedAmount | currency}}" }]
+    },
+
+    {
+      "type": "signature",
+      "lines": [{ "label": "{{preparedBy.name}}", "subLabel": "{{org.division}}, {{org.name}}" }]
+    }
+  ]
+}

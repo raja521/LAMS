@@ -1,0 +1,64 @@
+{
+  "id": "disposition-evaluation",
+  "name": "Disposition Evaluation Criteria",
+  "description": "How the District decides whether a property should be sold or transferred. A higher result means a stronger case for disposition.",
+  "module": "disposition",
+  "version": "1",
+  "scale": { "min": 0, "max": 5, "labels": ["None", "Very low", "Low", "Moderate", "High", "Very high"] },
+  "criteria": [
+    {
+      "id": "program-alignment",
+      "label": "Loss of program alignment",
+      "description": "Extent to which the property no longer serves an adopted District program.",
+      "weight": 3,
+      "maxScore": 5
+    },
+    {
+      "id": "management-cost",
+      "label": "Management cost burden",
+      "description": "Cost and effort of continuing to hold and maintain the property.",
+      "weight": 3,
+      "maxScore": 5
+    },
+    {
+      "id": "isolation",
+      "label": "Isolation from other holdings",
+      "description": "Whether the property stands alone, away from other District land.",
+      "weight": 2,
+      "maxScore": 5
+    },
+    {
+      "id": "resource-value-remaining",
+      "label": "Remaining resource value",
+      "description": "Habitat or resource value still present. Higher score = less value remaining.",
+      "weight": 3,
+      "maxScore": 5
+    },
+    {
+      "id": "market-value",
+      "label": "Realisable value",
+      "description": "Proceeds the District could reasonably expect from a sale or exchange.",
+      "weight": 2,
+      "maxScore": 5
+    },
+    {
+      "id": "public-interest",
+      "label": "Public interest in retention",
+      "description": "Community use or attachment. Higher score = less public interest in keeping it.",
+      "weight": 2,
+      "maxScore": 5
+    },
+    {
+      "id": "legal-constraints",
+      "label": "Freedom from legal constraint",
+      "description": "Absence of deed restrictions, grant conditions or reversionary interests. Higher score = fewer constraints.",
+      "weight": 3,
+      "maxScore": 5
+    }
+  ],
+  "recommendations": [
+    { "value": "recommend", "label": "Recommended for disposition" },
+    { "value": "recommend_with_conditions", "label": "Recommended subject to conditions" },
+    { "value": "do_not_recommend", "label": "Recommended for retention" }
+  ]
+}

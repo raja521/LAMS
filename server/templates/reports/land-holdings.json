@@ -1,0 +1,71 @@
+{
+  "id": "land-holdings",
+  "name": "Land Holdings",
+  "description": "Every property the District holds, with size, program and status.",
+  "dataset": "parcels",
+  "module": "management",
+  "version": "1",
+  "totals": [
+    "acres"
+  ],
+  "columns": [
+    {
+      "header": "Parcel ID",
+      "key": "parcelId",
+      "width": 16
+    },
+    {
+      "header": "Name",
+      "key": "name",
+      "width": 30
+    },
+    {
+      "header": "Region",
+      "key": "region",
+      "width": 14
+    },
+    {
+      "header": "County",
+      "key": "county",
+      "width": 16
+    },
+    {
+      "header": "Acres",
+      "key": "acres",
+      "type": "number",
+      "width": 10
+    },
+    {
+      "header": "Program",
+      "key": "program",
+      "width": 22
+    },
+    {
+      "header": "Status",
+      "key": "status",
+      "width": 14
+    },
+    {
+      "header": "Acquired",
+      "key": "acquiredOn",
+      "type": "date",
+      "width": 13
+    },
+    {
+      "header": "Disposed",
+      "key": "disposedOn",
+      "type": "date",
+      "width": 13
+    },
+    {
+      "header": "Assigned to",
+      "key": "assignedTo",
+      "width": 22
+    },
+    {
+      "header": "Legacy ID",
+      "key": "legacyId",
+      "width": 14
+    }
+  ]
+}

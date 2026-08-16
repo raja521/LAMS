@@ -1,0 +1,71 @@
+{
+  "id": "contract-register",
+  "name": "Contract Register",
+  "description": "Every contract, its value, term and the parcels it covers.",
+  "dataset": "contracts",
+  "module": "management",
+  "version": "1",
+  "totals": [
+    "value"
+  ],
+  "columns": [
+    {
+      "header": "Contract",
+      "key": "contractNumber",
+      "width": 18
+    },
+    {
+      "header": "Title",
+      "key": "title",
+      "width": 34
+    },
+    {
+      "header": "Type",
+      "key": "type",
+      "width": 16
+    },
+    {
+      "header": "Vendor",
+      "key": "vendor",
+      "width": 26
+    },
+    {
+      "header": "Parcels",
+      "key": "parcels",
+      "width": 26
+    },
+    {
+      "header": "Module",
+      "key": "module",
+      "width": 14
+    },
+    {
+      "header": "Value",
+      "key": "value",
+      "type": "currency",
+      "width": 15
+    },
+    {
+      "header": "Start",
+      "key": "startDate",
+      "type": "date",
+      "width": 13
+    },
+    {
+      "header": "End",
+      "key": "endDate",
+      "type": "date",
+      "width": 13
+    },
+    {
+      "header": "Status",
+      "key": "status",
+      "width": 16
+    },
+    {
+      "header": "Legacy ID",
+      "key": "legacyId",
+      "width": 14
+    }
+  ]
+}

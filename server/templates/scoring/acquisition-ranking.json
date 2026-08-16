@@ -1,0 +1,71 @@
+{
+  "id": "acquisition-ranking",
+  "name": "Acquisition Review Criteria",
+  "description": "How the internal review team ranks properties offered to the District. Adjust the weights or add a criterion here — no code change is needed.",
+  "module": "acquisition",
+  "version": "1",
+  "scale": { "min": 0, "max": 5, "labels": ["None", "Poor", "Fair", "Good", "Very good", "Excellent"] },
+  "criteria": [
+    {
+      "id": "resource-value",
+      "label": "Natural resource value",
+      "description": "Quality of habitat, water resources, forest or other natural features.",
+      "weight": 3,
+      "maxScore": 5
+    },
+    {
+      "id": "program-fit",
+      "label": "Fit with program goals",
+      "description": "How well the property advances an adopted District program.",
+      "weight": 3,
+      "maxScore": 5
+    },
+    {
+      "id": "connectivity",
+      "label": "Connectivity to existing holdings",
+      "description": "Whether the property adjoins or links land the District already manages.",
+      "weight": 2,
+      "maxScore": 5
+    },
+    {
+      "id": "public-access",
+      "label": "Public access potential",
+      "description": "Suitability for public use, including road frontage and parking.",
+      "weight": 2,
+      "maxScore": 5
+    },
+    {
+      "id": "acquisition-cost",
+      "label": "Cost relative to value",
+      "description": "Asking price measured against appraised or assessed value. Higher score = better value.",
+      "weight": 3,
+      "maxScore": 5
+    },
+    {
+      "id": "management-burden",
+      "label": "Ongoing management burden",
+      "description": "Expected cost and complexity of managing the property. Higher score = lower burden.",
+      "weight": 2,
+      "maxScore": 5
+    },
+    {
+      "id": "risk",
+      "label": "Environmental and legal risk",
+      "description": "Known contamination, encumbrances, easements or access disputes. Higher score = lower risk.",
+      "weight": 2,
+      "maxScore": 5
+    },
+    {
+      "id": "urgency",
+      "label": "Urgency or threat",
+      "description": "Risk of loss to development or other conversion if the District does not act.",
+      "weight": 1,
+      "maxScore": 5
+    }
+  ],
+  "recommendations": [
+    { "value": "recommend", "label": "Recommended for acquisition" },
+    { "value": "recommend_with_conditions", "label": "Recommended subject to conditions" },
+    { "value": "do_not_recommend", "label": "Not recommended for acquisition" }
+  ]
+}

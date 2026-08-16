@@ -1,0 +1,35 @@
+{
+  "name": "lams",
+  "version": "0.1.0",
+  "private": true,
+  "description": "LAMS - Land Acquisition and Management Software Solution",
+  "type": "module",
+  "workspaces": [
+    "server",
+    "client",
+    "migrations"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,magenta \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "npm run dev --workspace server",
+    "dev:client": "npm run dev --workspace client",
+    "build": "npm run build --workspace client",
+    "start": "npm run start --workspace server",
+    "test": "npm run test --workspace server",
+    "migrate": "npm run migrate --workspace migrations",
+    "migrate:status": "npm run status --workspace migrations",
+    "seed": "npm run seed --workspace migrations",
+    "env:check": "node server/src/config/env.js --check",
+    "import:dry-run": "npm run import:dry-run --workspace migrations",
+    "import:apply": "npm run import:apply --workspace migrations",
+    "report:monthly": "node server/src/scripts/runMonthlyReports.js",
+    "secrets:check": "node scripts/check-secrets.js",
+    "docs:env": "node scripts/generate-env-docs.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

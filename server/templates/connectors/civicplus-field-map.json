@@ -1,0 +1,19 @@
+{
+  "_comment": "Maps CivicPlus form field names onto LAMS application fields. Change this file when the District changes their form \u2014 no code change is needed.",
+  "applicant": {
+    "name": "applicant_name",
+    "email": "applicant_email",
+    "phone": "applicant_phone",
+    "mailingAddress": "applicant_address"
+  },
+  "property": {
+    "description": "property_description",
+    "address": "property_address",
+    "county": "property_county",
+    "region": "property_region",
+    "acres": "property_acres",
+    "askingPrice": "asking_price",
+    "parcelIdentifiers": "parcel_numbers"
+  },
+  "notes": "additional_comments"
+}

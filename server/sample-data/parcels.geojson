@@ -1,0 +1,283 @@
+{
+  "type": "FeatureCollection",
+  "name": "LAMS sample parcels",
+  "description": "Stand-in geometry used while GIS_PROVIDER=sample. Replace by pointing GIS_PROVIDER at arcgis and setting GIS_FEATURE_SERVICE_URL — no code change required.",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": 1,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -93.41482747117175,
+              45.04158914443718
+            ],
+            [
+              -93.40517252882825,
+              45.04158914443718
+            ],
+            [
+              -93.4061380230626,
+              45.04841085556282
+            ],
+            [
+              -93.41482747117175,
+              45.048069770006535
+            ],
+            [
+              -93.41482747117175,
+              45.04158914443718
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "parcelId": "SMP-0001",
+        "name": "North Ridge Woods",
+        "county": "Hennepin",
+        "region": "North",
+        "acres": 142.5,
+        "owner": "Alder Family Trust",
+        "ownerEmail": "contact@alderfamilytrust.example",
+        "ownerPhone": "555-0101",
+        "ownerAddress": "12 Ridge Road, Example City, ST 00000",
+        "askingPrice": 895000,
+        "address": "County Road 12",
+        "notes": "Mature oak stand with frontage on County Road 12."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 2,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -93.24380460742935,
+              45.20731961466636
+            ],
+            [
+              -93.23619539257064,
+              45.20731961466636
+            ],
+            [
+              -93.23695631405651,
+              45.21268038533364
+            ],
+            [
+              -93.24380460742935,
+              45.21241234680028
+            ],
+            [
+              -93.24380460742935,
+              45.20731961466636
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "parcelId": "SMP-0002",
+        "name": "Cedar Creek Bottoms",
+        "county": "Anoka",
+        "region": "North",
+        "acres": 88,
+        "owner": "Brookmyre Holdings LLC",
+        "ownerEmail": "land@brookmyre.example",
+        "ownerPhone": "555-0102",
+        "ownerAddress": "400 Commerce Way, Example City, ST 00000",
+        "askingPrice": 410000,
+        "address": "Cedar Creek Road",
+        "notes": "Wetland complex adjoining existing District holdings."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 3,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -93.05618413265574,
+              44.68560356263053
+            ],
+            [
+              -93.04381586734425,
+              44.68560356263053
+            ],
+            [
+              -93.0450526938754,
+              44.69439643736946
+            ],
+            [
+              -93.05618413265574,
+              44.693956793632516
+            ],
+            [
+              -93.05618413265574,
+              44.68560356263053
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "parcelId": "SMP-0003",
+        "name": "Prairie Bend Farm",
+        "county": "Dakota",
+        "region": "South",
+        "acres": 236.75,
+        "owner": "Estate of M. Vasquez",
+        "ownerEmail": "executor@vasquezestate.example",
+        "ownerPhone": "555-0103",
+        "ownerAddress": "88 Prairie Lane, Example City, ST 00000",
+        "askingPrice": 1750000,
+        "address": "240th Street East",
+        "notes": "Former cropland, restoration candidate. Estate sale, time sensitive."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 4,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -92.86297800763363,
+              45.0578964369186
+            ],
+            [
+              -92.85702199236637,
+              45.0578964369186
+            ],
+            [
+              -92.8576175938931,
+              45.06210356308141
+            ],
+            [
+              -92.86297800763363,
+              45.06189320677326
+            ],
+            [
+              -92.86297800763363,
+              45.0578964369186
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "parcelId": "SMP-0004",
+        "name": "Willow Slough",
+        "county": "Washington",
+        "region": "East",
+        "acres": 54.2,
+        "owner": "Nguyen Land Partners",
+        "ownerEmail": "info@nguyenlandpartners.example",
+        "ownerPhone": "555-0104",
+        "ownerAddress": "7 Slough Court, Example City, ST 00000",
+        "askingPrice": 325000,
+        "address": "Manning Avenue North",
+        "notes": "Small parcel, links two existing preserves."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 5,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -93.52708051050291,
+              44.62496109591873
+            ],
+            [
+              -93.51291948949708,
+              44.62496109591873
+            ],
+            [
+              -93.51433559159766,
+              44.63503890408128
+            ],
+            [
+              -93.52708051050291,
+              44.63453501367315
+            ],
+            [
+              -93.52708051050291,
+              44.62496109591873
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "parcelId": "SMP-0005",
+        "name": "Stone Quarry Uplands",
+        "county": "Scott",
+        "region": "South",
+        "acres": 311,
+        "owner": "Halvorsen Aggregate Co.",
+        "ownerEmail": "realestate@halvorsenagg.example",
+        "ownerPhone": "555-0105",
+        "ownerAddress": "1500 Quarry Road, Example City, ST 00000",
+        "askingPrice": 2100000,
+        "address": "Highway 169",
+        "notes": "Reclaimed quarry uplands. Phase I recommended before offer."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 6,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -93.73397620458671,
+              44.85718153713571
+            ],
+            [
+              -93.7260237954133,
+              44.85718153713571
+            ],
+            [
+              -93.72681903633064,
+              44.86281846286429
+            ],
+            [
+              -93.73397620458671,
+              44.86253661657786
+            ],
+            [
+              -93.73397620458671,
+              44.85718153713571
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "parcelId": "SMP-0006",
+        "name": "Birch Hollow",
+        "county": "Carver",
+        "region": "West",
+        "acres": 97.3,
+        "owner": "Okafor Family Farm",
+        "ownerEmail": "okafor.farm@example.org",
+        "ownerPhone": "555-0106",
+        "ownerAddress": "3300 Hollow Drive, Example City, ST 00000",
+        "askingPrice": 612000,
+        "address": "County Road 33",
+        "notes": "Mixed hardwood with an intermittent stream."
+      }
+    }
+  ]
+}

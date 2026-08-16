@@ -1,0 +1,65 @@
+{
+  "id": "maintenance-services-contract",
+  "name": "Maintenance Services Contract",
+  "description": "Standard contract for maintenance work carried out on District land.",
+  "documentType": "contract",
+  "module": "management",
+  "version": "1",
+  "titleTemplate": "Maintenance Services Contract — {{contract.contractNumber}}",
+  "blocks": [
+    { "type": "heading", "level": 1, "text": "MAINTENANCE SERVICES CONTRACT", "align": "center" },
+    { "type": "paragraph", "text": "Contract No. {{contract.contractNumber}}", "align": "center" },
+    { "type": "divider" },
+
+    {
+      "type": "paragraph",
+      "text": "This Contract is entered into on {{doc.date | date}} between {{org.name}} (\"the District\"), of {{org.address}}, and {{vendorName}} (\"the Contractor\")."
+    },
+
+    { "type": "heading", "level": 2, "text": "1. Scope" },
+    { "type": "paragraph", "text": "{{contract.description}}" },
+    {
+      "type": "table",
+      "source": "parcels",
+      "emptyText": "No parcels have been attached to this contract.",
+      "columns": [
+        { "header": "Parcel", "field": "parcelId", "width": 22 },
+        { "header": "Name", "field": "name", "width": 42 },
+        { "header": "County", "field": "county", "width": 20 },
+        { "header": "Size", "field": "areaLabel", "width": 16, "align": "right" }
+      ]
+    },
+
+    { "type": "heading", "level": 2, "text": "2. Term and value" },
+    {
+      "type": "keyValue",
+      "labelWidth": 32,
+      "items": [
+        { "label": "Start date", "value": "{{contract.startDate | date}}" },
+        { "label": "End date", "value": "{{contract.endDate | date}}" },
+        { "label": "Contract value", "value": "{{contract.value.amount | currency}}" },
+        { "label": "Contract manager", "value": "{{managerName}}" }
+      ]
+    },
+
+    { "type": "heading", "level": 2, "text": "3. Terms" },
+    {
+      "type": "list",
+      "items": [
+        "The Contractor shall perform the work described above in a workmanlike manner and in accordance with all applicable law.",
+        "Payment shall be made against purchase orders issued under this Contract and shall not exceed the contract value without a written amendment.",
+        "The Contractor shall carry insurance in the amounts required by the District and provide evidence of it before mobilising.",
+        "Either party may terminate this Contract on thirty (30) days written notice.",
+        "The District may inspect the work at any time and may withhold payment for work not performed to specification."
+      ]
+    },
+
+    {
+      "type": "signature",
+      "lines": [
+        { "label": "{{managerName}}", "subLabel": "{{org.name}} — Contract Manager" },
+        { "label": "{{vendorName}}", "subLabel": "Contractor — date: ______________________" }
+      ]
+    }
+  ]
+}

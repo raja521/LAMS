@@ -1,0 +1,245 @@
+{
+  "id": "legacy-land-tracker",
+  "name": "District Land Tracker \u2014 initial load",
+  "description": "Maps the columns of the District's existing land-tracking export onto LAMS records. Change the \"column\" values to match the District's actual export headings; nothing in the code needs to be touched.",
+  "version": "1",
+  "legacySystem": "District Land Tracker",
+  "targets": [
+    {
+      "model": "Organization",
+      "comment": "Landowners and vendors named in the export, created once and referenced by the records below.",
+      "legacyIdColumn": "OwnerID",
+      "skipWhenBlank": "OwnerName",
+      "dedupeOn": "name",
+      "fields": {
+        "name": {
+          "column": "OwnerName",
+          "required": true,
+          "transform": "trim"
+        },
+        "contactEmail": {
+          "column": "OwnerEmail",
+          "transform": "lowercase"
+        },
+        "contactPhone": {
+          "column": "OwnerPhone"
+        },
+        "type": {
+          "const": "other"
+        }
+      },
+      "key": "Organization (owners)"
+    },
+    {
+      "model": "Program",
+      "comment": "Funding programs referenced by parcels.",
+      "legacyIdColumn": "ProgramCode",
+      "skipWhenBlank": "ProgramName",
+      "dedupeOn": "name",
+      "fields": {
+        "name": {
+          "column": "ProgramName",
+          "required": true,
+          "transform": "trim"
+        },
+        "code": {
+          "column": "ProgramCode",
+          "transform": "uppercase"
+        },
+        "isActive": {
+          "const": true
+        }
+      },
+      "key": "Program"
+    },
+    {
+      "model": "Parcel",
+      "comment": "The land itself. This is the record everything else hangs off.",
+      "legacyIdColumn": "ParcelKey",
+      "skipWhenBlank": "ParcelNumber",
+      "dedupeOn": "parcelId",
+      "fields": {
+        "parcelId": {
+          "column": "ParcelNumber",
+          "required": true,
+          "transform": "uppercase"
+        },
+        "name": {
+          "column": "PropertyName",
+          "required": true,
+          "fallback": "Parcel {{ParcelNumber}}"
+        },
+        "region": {
+          "column": "Region",
+          "required": true,
+          "default": "Unassigned"
+        },
+        "county": {
+          "column": "County",
+          "required": true,
+          "default": "Unknown"
+        },
+        "area.value": {
+          "column": "Acres",
+          "type": "number",
+          "default": 0
+        },
+        "area.unit": {
+          "const": "acres"
+        },
+        "status": {
+          "column": "Status",
+          "type": "enum",
+          "default": "management",
+          "values": {
+            "active": "management",
+            "managed": "management",
+            "owned": "management",
+            "held": "management",
+            "pending": "acquisition",
+            "in acquisition": "acquisition",
+            "acquiring": "acquisition",
+            "surplus": "disposition",
+            "for sale": "disposition",
+            "disposed": "disposition",
+            "sold": "disposition"
+          }
+        },
+        "programName": {
+          "column": "ProgramName"
+        },
+        "program": {
+          "lookup": {
+            "model": "Program",
+            "by": "name",
+            "column": "ProgramName"
+          }
+        },
+        "ownerOrganization": {
+          "lookup": {
+            "model": "Organization",
+            "by": "name",
+            "column": "OwnerName"
+          }
+        },
+        "acquiredOn": {
+          "column": "AcquiredDate",
+          "type": "date"
+        },
+        "disposedOn": {
+          "column": "DisposedDate",
+          "type": "date"
+        },
+        "notes": {
+          "column": "Notes"
+        },
+        "geometry.source": {
+          "const": "arcgis"
+        },
+        "geometry.ref": {
+          "column": "ParcelNumber",
+          "transform": "uppercase"
+        },
+        "geometry.srid": {
+          "const": "EPSG:4326"
+        }
+      },
+      "key": "Parcel",
+      "primary": true
+    },
+    {
+      "key": "Organization (vendors)",
+      "model": "Organization",
+      "comment": "Vendors named on contracts, created so a contract can point at one.",
+      "skipWhenBlank": "VendorName",
+      "dedupeOn": "name",
+      "fields": {
+        "name": {
+          "column": "VendorName",
+          "required": true,
+          "transform": "trim"
+        },
+        "type": {
+          "const": "contractor"
+        }
+      }
+    },
+    {
+      "model": "Contract",
+      "comment": "Contracts recorded against a parcel in the old system.",
+      "legacyIdColumn": "ContractID",
+      "skipWhenBlank": "ContractNumber",
+      "dedupeOn": "contractNumber",
+      "fields": {
+        "contractNumber": {
+          "column": "ContractNumber",
+          "required": true,
+          "transform": "uppercase"
+        },
+        "title": {
+          "column": "ContractTitle",
+          "required": true,
+          "fallback": "Contract {{ContractNumber}}"
+        },
+        "module": {
+          "const": "management"
+        },
+        "type": {
+          "const": "services"
+        },
+        "status": {
+          "column": "ContractStatus",
+          "type": "enum",
+          "default": "completed",
+          "values": {
+            "open": "active",
+            "active": "active",
+            "closed": "completed",
+            "complete": "completed",
+            "cancelled": "terminated"
+          }
+        },
+        "value.amount": {
+          "column": "ContractAmount",
+          "type": "number",
+          "default": 0
+        },
+        "startDate": {
+          "column": "ContractStart",
+          "type": "date"
+        },
+        "endDate": {
+          "column": "ContractEnd",
+          "type": "date"
+        },
+        "vendor": {
+          "lookup": {
+            "model": "Organization",
+            "by": "name",
+            "column": "VendorName"
+          }
+        },
+        "parcels": {
+          "lookupMany": {
+            "model": "Parcel",
+            "by": "parcelId",
+            "column": "ParcelNumber",
+            "transform": "uppercase"
+          }
+        }
+      },
+      "key": "Contract"
+    }
+  ],
+  "validations": [
+    {
+      "rule": "requiredColumns",
+      "columns": [
+        "ParcelNumber",
+        "PropertyName",
+        "County"
+      ],
+      "message": "The export must contain at least a parcel number, a property name and a county."
+    }
+  ]
+}

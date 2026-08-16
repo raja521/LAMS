@@ -1,0 +1,128 @@
+{
+  "id": "acquisition-ranking-memo",
+  "name": "Land Acquisition Ranking Memorandum",
+  "description": "Summarises the review team's scoring and recommendation for a property offered to the District.",
+  "documentType": "memo",
+  "module": "acquisition",
+  "version": "1",
+  "titleTemplate": "Acquisition Ranking Memorandum — {{application.fileNumber}}",
+  "font": "Calibri",
+  "fontSize": 11,
+  "margins": { "top": 1, "bottom": 1, "left": 1, "right": 1 },
+  "blocks": [
+    { "type": "heading", "level": 1, "text": "MEMORANDUM", "align": "center" },
+    { "type": "divider" },
+
+    {
+      "type": "keyValue",
+      "labelWidth": 22,
+      "borders": false,
+      "items": [
+        { "label": "To:", "value": "Land Acquisition Review Committee" },
+        { "label": "From:", "value": "{{preparedBy.name}}, {{org.division}}" },
+        { "label": "Date:", "value": "{{doc.date | date}}" },
+        { "label": "Document No:", "value": "{{doc.number}}" },
+        { "label": "File No:", "value": "{{application.fileNumber}}" },
+        { "label": "Subject:", "value": "Acquisition review and ranking — {{application.property.description}}" }
+      ]
+    },
+
+    { "type": "divider" },
+
+    { "type": "heading", "level": 2, "text": "1. Property under consideration" },
+    {
+      "type": "keyValue",
+      "labelWidth": 32,
+      "items": [
+        { "label": "Applicant", "value": "{{application.applicant.name}}" },
+        { "label": "Property", "value": "{{application.property.description}}" },
+        { "label": "County", "value": "{{application.property.county}}" },
+        { "label": "Region", "value": "{{application.property.region}}" },
+        { "label": "Size", "value": "{{application.property.acres | number}} acres" },
+        { "label": "Asking price", "value": "{{application.property.askingPrice | currency}}" },
+        { "label": "Date received", "value": "{{application.submittedAt | date}}" },
+        { "label": "Parcel identifiers", "value": "{{application.property.parcelIdentifiers}}" }
+      ]
+    },
+
+    { "type": "heading", "level": 2, "text": "2. Planning summary", "when": "prospectus" },
+    {
+      "type": "keyValue",
+      "labelWidth": 32,
+      "when": "prospectus",
+      "items": [
+        { "label": "Intended use", "value": "{{prospectus.programPlan.intendedUse}}" },
+        { "label": "Management approach", "value": "{{prospectus.programPlan.managementApproach}}" },
+        { "label": "Planning horizon", "value": "{{prospectus.programPlan.horizonYears}} years" },
+        { "label": "Site inspected", "value": "{{prospectus.siteInspection.inspectedOn | date}}" },
+        { "label": "Site condition", "value": "{{prospectus.siteInspection.conditionSummary}}" },
+        { "label": "Estimated cost", "value": "{{prospectus.costEstimate.total | currency}}" }
+      ]
+    },
+
+    { "type": "heading", "level": 2, "text": "3. Evaluation scores" },
+    {
+      "type": "paragraph",
+      "text": "The property was scored against the \"{{scoringTemplate.name}}\" criteria adopted by the review team. Each criterion is weighted; the weighted result is shown as a percentage of the maximum achievable score."
+    },
+    {
+      "type": "table",
+      "source": "evaluation.scores",
+      "emptyText": "No scores have been recorded for this property.",
+      "columns": [
+        { "header": "#", "field": "$index", "width": 6, "align": "center" },
+        { "header": "Criterion", "field": "label", "width": 38 },
+        { "header": "Weight", "field": "weight", "width": 12, "align": "center" },
+        { "header": "Score", "field": "score", "width": 12, "align": "center" },
+        { "header": "Out of", "field": "maxScore", "width": 12, "align": "center" },
+        { "header": "Comment", "field": "comment", "width": 20 }
+      ]
+    },
+    {
+      "type": "keyValue",
+      "labelWidth": 32,
+      "items": [
+        { "label": "Weighted total", "value": "{{evaluation.totalScore}} of {{evaluation.maxPossibleScore}}" },
+        { "label": "Overall result", "value": "{{evaluation.normalizedScore | percent}}" },
+        { "label": "Rank this cycle", "value": "{{evaluation.rank}} of {{rankingContext.total}}" },
+        { "label": "Ranking cycle", "value": "{{evaluation.rankCycle}}" }
+      ]
+    },
+
+    { "type": "heading", "level": 2, "text": "4. Comparative ranking" },
+    {
+      "type": "paragraph",
+      "text": "All properties scored in the {{evaluation.rankCycle}} cycle, highest first:"
+    },
+    {
+      "type": "table",
+      "source": "rankingContext.entries",
+      "emptyText": "No other properties have been scored in this cycle.",
+      "columns": [
+        { "header": "Rank", "field": "rank", "width": 10, "align": "center" },
+        { "header": "File No.", "field": "fileNumber", "width": 22 },
+        { "header": "Property", "field": "label", "width": 46 },
+        { "header": "Result", "field": "normalizedScoreLabel", "width": 22, "align": "center" }
+      ]
+    },
+
+    { "type": "heading", "level": 2, "text": "5. Recommendation" },
+    { "type": "paragraph", "text": "{{recommendationLabel}}", "bold": true },
+    { "type": "paragraph", "text": "{{evaluation.recommendationNotes}}" },
+
+    { "type": "spacer", "lines": 1 },
+    {
+      "type": "paragraph",
+      "text": "This memorandum was produced automatically from file {{application.fileNumber}} on {{doc.date | datetime}}. Supporting records are held in LAMS.",
+      "italic": true
+    },
+
+    {
+      "type": "signature",
+      "lines": [
+        { "label": "{{preparedBy.name}}", "subLabel": "{{org.division}} — prepared by" },
+        { "label": "Committee Chair", "subLabel": "Date: ______________________" }
+      ]
+    }
+  ]
+}

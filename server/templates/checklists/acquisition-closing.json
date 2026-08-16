@@ -1,0 +1,105 @@
+{
+  "id": "acquisition-closing",
+  "name": "Pre-Closing Checklist — Acquisition",
+  "description": "Everything that must happen before a purchase can close. Edit this file to change the steps.",
+  "module": "acquisition",
+  "version": "1",
+  "items": [
+    {
+      "id": "title-search",
+      "label": "Title search completed",
+      "description": "Order and review a title commitment; note any encumbrances or easements.",
+      "category": "Legal",
+      "required": true,
+      "dueInDays": 30
+    },
+    {
+      "id": "appraisal",
+      "label": "Appraisal completed",
+      "description": "Independent appraisal by a certified appraiser.",
+      "category": "Valuation",
+      "required": true,
+      "dueInDays": 45
+    },
+    {
+      "id": "review-appraisal",
+      "label": "Appraisal review completed",
+      "description": "Second review of the appraisal where the value exceeds the delegated threshold.",
+      "category": "Valuation",
+      "required": false,
+      "dueInDays": 55
+    },
+    {
+      "id": "phase-1-esa",
+      "label": "Phase I Environmental Site Assessment",
+      "description": "Screen for recognised environmental conditions.",
+      "category": "Environmental",
+      "required": true,
+      "dueInDays": 60
+    },
+    {
+      "id": "phase-2-esa",
+      "label": "Phase II Environmental Site Assessment",
+      "description": "Only if the Phase I identifies a recognised environmental condition.",
+      "category": "Environmental",
+      "required": false,
+      "dueInDays": 90
+    },
+    {
+      "id": "wetland-delineation",
+      "label": "Wetland delineation",
+      "description": "Delineate and map wetlands where indicators are present.",
+      "category": "Environmental",
+      "required": false,
+      "dueInDays": 75
+    },
+    {
+      "id": "survey",
+      "label": "Boundary survey completed",
+      "description": "Confirm boundaries and acreage; identify encroachments.",
+      "category": "Survey",
+      "required": true,
+      "dueInDays": 60
+    },
+    {
+      "id": "board-approval",
+      "label": "Board or committee approval recorded",
+      "description": "Approval of the acquisition, with the ranking memorandum attached.",
+      "category": "Approval",
+      "required": true,
+      "dueInDays": 70
+    },
+    {
+      "id": "purchase-agreement",
+      "label": "Purchase agreement executed",
+      "description": "Signed by both the seller and the District's authorised signatory.",
+      "category": "Legal",
+      "required": true,
+      "dueInDays": 90
+    },
+    {
+      "id": "funding-confirmed",
+      "label": "Funding source confirmed",
+      "description": "Confirm the program and funding source can cover the purchase and closing costs.",
+      "category": "Finance",
+      "required": true,
+      "dueInDays": 60
+    },
+    {
+      "id": "closing-scheduled",
+      "label": "Closing scheduled and completed",
+      "description": "Closing held, funds disbursed, deed recorded.",
+      "category": "Closing",
+      "required": true,
+      "dueInDays": 120
+    },
+    {
+      "id": "deed-recorded",
+      "label": "Deed recorded with the county",
+      "description": "Recorded copy filed in the property record.",
+      "category": "Closing",
+      "required": true,
+      "dueInDays": 130
+    }
+  ]
+}

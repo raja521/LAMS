@@ -1,0 +1,96 @@
+{
+  "id": "maintenance-schedule",
+  "name": "Maintenance Schedule",
+  "description": "Scheduled and completed maintenance, with the contract and purchase order paying for it.",
+  "dataset": "tasks",
+  "module": "management",
+  "version": "1",
+  "totals": [
+    "acres",
+    "estimatedCost",
+    "actualCost"
+  ],
+  "columns": [
+    {
+      "header": "Task",
+      "key": "title",
+      "width": 32
+    },
+    {
+      "header": "Type",
+      "key": "taskType",
+      "width": 24
+    },
+    {
+      "header": "Parcel",
+      "key": "parcelId",
+      "width": 16
+    },
+    {
+      "header": "Property",
+      "key": "parcelName",
+      "width": 26
+    },
+    {
+      "header": "County",
+      "key": "county",
+      "width": 16
+    },
+    {
+      "header": "Contract",
+      "key": "contractNumber",
+      "width": 18
+    },
+    {
+      "header": "PO",
+      "key": "poNumber",
+      "width": 18
+    },
+    {
+      "header": "Vendor",
+      "key": "vendor",
+      "width": 24
+    },
+    {
+      "header": "Start",
+      "key": "scheduledStart",
+      "type": "date",
+      "width": 13
+    },
+    {
+      "header": "End",
+      "key": "scheduledEnd",
+      "type": "date",
+      "width": 13
+    },
+    {
+      "header": "Completed",
+      "key": "completedOn",
+      "type": "date",
+      "width": 13
+    },
+    {
+      "header": "Acres",
+      "key": "acres",
+      "type": "number",
+      "width": 10
+    },
+    {
+      "header": "Estimate",
+      "key": "estimatedCost",
+      "type": "currency",
+      "width": 14
+    },
+    {
+      "header": "Actual",
+      "key": "actualCost",
+      "type": "currency",
+      "width": 14
+    },
+    {
+      "header": "Status",
+      "key": "status",
+      "width": 14
+    }
+  ]
+}

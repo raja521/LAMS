@@ -1,0 +1,72 @@
+{
+  "id": "planned-work",
+  "name": "Planned Work by Year",
+  "description": "Multi-year plans flattened to one row per planned year, for budgeting.",
+  "dataset": "plans",
+  "module": "management",
+  "version": "1",
+  "totals": [
+    "acres",
+    "estimatedCost"
+  ],
+  "columns": [
+    {
+      "header": "Parcel",
+      "key": "parcelId",
+      "width": 16
+    },
+    {
+      "header": "Property",
+      "key": "parcelName",
+      "width": 28
+    },
+    {
+      "header": "County",
+      "key": "county",
+      "width": 16
+    },
+    {
+      "header": "Region",
+      "key": "region",
+      "width": 14
+    },
+    {
+      "header": "Plan",
+      "key": "planName",
+      "width": 28
+    },
+    {
+      "header": "Program area",
+      "key": "programArea",
+      "width": 24
+    },
+    {
+      "header": "Year",
+      "key": "year",
+      "type": "number",
+      "width": 9
+    },
+    {
+      "header": "Activity",
+      "key": "activity",
+      "width": 30
+    },
+    {
+      "header": "Acres",
+      "key": "acres",
+      "type": "number",
+      "width": 10
+    },
+    {
+      "header": "Estimated cost",
+      "key": "estimatedCost",
+      "type": "currency",
+      "width": 16
+    },
+    {
+      "header": "Status",
+      "key": "status",
+      "width": 14
+    }
+  ]
+}

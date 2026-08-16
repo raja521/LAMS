@@ -1,0 +1,77 @@
+{
+  "id": "acquisition-pipeline",
+  "name": "Acquisition Pipeline",
+  "description": "Applications to sell land to the District and where each one has reached.",
+  "dataset": "applications",
+  "module": "acquisition",
+  "version": "1",
+  "totals": [
+    "acres",
+    "askingPrice"
+  ],
+  "columns": [
+    {
+      "header": "File number",
+      "key": "fileNumber",
+      "width": 18
+    },
+    {
+      "header": "Applicant",
+      "key": "applicant",
+      "width": 26
+    },
+    {
+      "header": "Property",
+      "key": "property",
+      "width": 30
+    },
+    {
+      "header": "County",
+      "key": "county",
+      "width": 16
+    },
+    {
+      "header": "Region",
+      "key": "region",
+      "width": 14
+    },
+    {
+      "header": "Acres",
+      "key": "acres",
+      "type": "number",
+      "width": 10
+    },
+    {
+      "header": "Asking price",
+      "key": "askingPrice",
+      "type": "currency",
+      "width": 15
+    },
+    {
+      "header": "Status",
+      "key": "status",
+      "width": 18
+    },
+    {
+      "header": "Source",
+      "key": "source",
+      "width": 14
+    },
+    {
+      "header": "Received",
+      "key": "submittedAt",
+      "type": "date",
+      "width": 13
+    },
+    {
+      "header": "Assigned to",
+      "key": "assignedTo",
+      "width": 22
+    },
+    {
+      "header": "Legacy ID",
+      "key": "legacyId",
+      "width": 14
+    }
+  ]
+}

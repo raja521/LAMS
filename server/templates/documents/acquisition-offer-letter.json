@@ -1,0 +1,65 @@
+{
+  "id": "acquisition-offer-letter",
+  "name": "Offer to Purchase Letter",
+  "description": "Letter to a landowner setting out the District's offer for their property.",
+  "documentType": "letter",
+  "module": "acquisition",
+  "version": "1",
+  "titleTemplate": "Offer to Purchase — {{application.fileNumber}}",
+  "blocks": [
+    { "type": "paragraph", "text": "{{doc.date | date}}", "align": "right" },
+    { "type": "spacer", "lines": 1 },
+
+    { "type": "paragraph", "text": "{{application.applicant.name}}" },
+    { "type": "paragraph", "text": "{{application.applicant.mailingAddress}}" },
+    { "type": "spacer", "lines": 1 },
+
+    { "type": "paragraph", "text": "RE: Offer to purchase — {{application.property.description}} (File {{application.fileNumber}})", "bold": true },
+    { "type": "spacer", "lines": 1 },
+
+    { "type": "paragraph", "text": "Dear {{application.applicant.name}}," },
+    {
+      "type": "paragraph",
+      "text": "Thank you for offering your property in {{application.property.county}} County to {{org.name}}. Following our review, including a site inspection and evaluation against our adopted acquisition criteria, the District is pleased to extend the following offer."
+    },
+
+    {
+      "type": "keyValue",
+      "labelWidth": 32,
+      "items": [
+        { "label": "Property", "value": "{{application.property.description}}" },
+        { "label": "Approximate size", "value": "{{application.property.acres | number}} acres" },
+        { "label": "Parcel identifiers", "value": "{{application.property.parcelIdentifiers}}" },
+        { "label": "Offer amount", "value": "{{offer.amount | currency}}" },
+        { "label": "Offer valid until", "value": "{{offer.expiresOn | date}}" }
+      ]
+    },
+
+    {
+      "type": "paragraph",
+      "text": "This offer is subject to satisfactory completion of the items below, each of which the District will arrange and pay for unless noted otherwise:"
+    },
+    {
+      "type": "list",
+      "source": "checklist.items",
+      "itemText": "{{label}} — {{statusLabel}}",
+      "emptyText": "No pre-closing conditions have been recorded."
+    },
+
+    {
+      "type": "paragraph",
+      "text": "If you wish to accept, please sign below and return one copy to the address in the letterhead. Questions can be directed to {{preparedBy.name}} at {{preparedBy.email}}."
+    },
+
+    { "type": "spacer", "lines": 1 },
+    { "type": "paragraph", "text": "Sincerely," },
+
+    {
+      "type": "signature",
+      "lines": [
+        { "label": "{{preparedBy.name}}", "subLabel": "{{org.division}}, {{org.name}}" },
+        { "label": "{{application.applicant.name}}", "subLabel": "Accepted — date: ______________________" }
+      ]
+    }
+  ]
+}

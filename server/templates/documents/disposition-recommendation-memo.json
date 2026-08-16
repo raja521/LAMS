@@ -1,0 +1,118 @@
+{
+  "id": "disposition-recommendation-memo",
+  "name": "Land Disposition Recommendation Memorandum",
+  "description": "Recommends that a property be sold or transferred, with the evaluation that supports it.",
+  "documentType": "memo",
+  "module": "disposition",
+  "version": "1",
+  "titleTemplate": "Disposition Recommendation — {{dispositionCase.caseNumber}}",
+  "blocks": [
+    { "type": "heading", "level": 1, "text": "MEMORANDUM", "align": "center" },
+    { "type": "divider" },
+
+    {
+      "type": "keyValue",
+      "labelWidth": 22,
+      "borders": false,
+      "items": [
+        { "label": "To:", "value": "Board of Managers" },
+        { "label": "From:", "value": "{{preparedBy.name}}, {{org.division}}" },
+        { "label": "Date:", "value": "{{doc.date | date}}" },
+        { "label": "Document No:", "value": "{{doc.number}}" },
+        { "label": "Case No:", "value": "{{dispositionCase.caseNumber}}" },
+        { "label": "Subject:", "value": "Proposed {{dispositionCase.method}} of {{parcel.name}}" }
+      ]
+    },
+
+    { "type": "divider" },
+
+    { "type": "heading", "level": 2, "text": "1. Property" },
+    {
+      "type": "keyValue",
+      "labelWidth": 32,
+      "items": [
+        { "label": "Parcel", "value": "{{parcel.parcelId}} — {{parcel.name}}" },
+        { "label": "County", "value": "{{parcel.county}}" },
+        { "label": "Region", "value": "{{parcel.region}}" },
+        { "label": "Size", "value": "{{parcel.area.value | number}} {{parcel.area.unit}}" },
+        { "label": "Acquired", "value": "{{parcel.acquiredOn | date}}" },
+        { "label": "Proposed method", "value": "{{dispositionCase.method | upper}}" },
+        { "label": "Estimated value", "value": "{{dispositionCase.estimatedValue | currency}}" },
+        { "label": "Appraised value", "value": "{{dispositionCase.appraisedValue | currency}}" }
+      ]
+    },
+
+    { "type": "heading", "level": 2, "text": "2. Reason for disposition" },
+    { "type": "paragraph", "text": "{{dispositionCase.reason}}" },
+
+    { "type": "heading", "level": 2, "text": "3. Management history" },
+    {
+      "type": "paragraph",
+      "text": "The following management activity was carried forward with this case and considered in the evaluation."
+    },
+    {
+      "type": "table",
+      "source": "history.plans",
+      "emptyText": "No management plans are recorded against this parcel.",
+      "columns": [
+        { "header": "Program area", "field": "programAreaLabel", "width": 32 },
+        { "header": "Plan", "field": "name", "width": 40 },
+        { "header": "Years", "field": "yearRange", "width": 16, "align": "center" },
+        { "header": "Status", "field": "status", "width": 12, "align": "center" }
+      ]
+    },
+    {
+      "type": "table",
+      "source": "history.tasks",
+      "emptyText": "No maintenance tasks are recorded against this parcel.",
+      "columns": [
+        { "header": "Task", "field": "title", "width": 38 },
+        { "header": "Type", "field": "taskTypeLabel", "width": 24 },
+        { "header": "Scheduled", "field": "scheduledLabel", "width": 20, "align": "center" },
+        { "header": "Status", "field": "status", "width": 18, "align": "center" }
+      ]
+    },
+
+    { "type": "heading", "level": 2, "text": "4. Evaluation" },
+    {
+      "type": "table",
+      "source": "evaluation.scores",
+      "emptyText": "No evaluation scores have been recorded.",
+      "columns": [
+        { "header": "Criterion", "field": "label", "width": 44 },
+        { "header": "Weight", "field": "weight", "width": 12, "align": "center" },
+        { "header": "Score", "field": "score", "width": 12, "align": "center" },
+        { "header": "Out of", "field": "maxScore", "width": 12, "align": "center" },
+        { "header": "Comment", "field": "comment", "width": 20 }
+      ]
+    },
+    {
+      "type": "keyValue",
+      "labelWidth": 32,
+      "items": [
+        { "label": "Weighted total", "value": "{{evaluation.totalScore}} of {{evaluation.maxPossibleScore}}" },
+        { "label": "Overall result", "value": "{{evaluation.normalizedScore | percent}}" }
+      ]
+    },
+
+    { "type": "heading", "level": 2, "text": "5. Recommendation" },
+    { "type": "paragraph", "text": "{{recommendationLabel}}", "bold": true },
+    { "type": "paragraph", "text": "{{evaluation.recommendationNotes}}" },
+
+    { "type": "heading", "level": 2, "text": "6. Outstanding closing items" },
+    {
+      "type": "list",
+      "source": "checklist.items",
+      "itemText": "{{label}} — {{statusLabel}}",
+      "emptyText": "No closing checklist has been started for this case."
+    },
+
+    {
+      "type": "signature",
+      "lines": [
+        { "label": "{{preparedBy.name}}", "subLabel": "{{org.division}} — prepared by" },
+        { "label": "Board Chair", "subLabel": "Date: ______________________" }
+      ]
+    }
+  ]
+}

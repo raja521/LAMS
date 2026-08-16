@@ -1,0 +1,60 @@
+{
+  "id": "standard-prospectus",
+  "name": "Standard Property Prospectus",
+  "description": "The District's short planning document: site inspection, program plan and rough cost estimate in one form. Sections and questions are defined here, so the form can be changed without a developer.",
+  "module": "acquisition",
+  "version": "1",
+  "sections": [
+    {
+      "id": "site-inspection",
+      "title": "Site inspection",
+      "description": "Recorded at the time of the visit.",
+      "fields": [
+        { "id": "inspectedOn", "label": "Date inspected", "type": "date", "bindTo": "siteInspection.inspectedOn", "required": true },
+        { "id": "conditionSummary", "label": "Overall condition", "type": "textarea", "bindTo": "siteInspection.conditionSummary", "rows": 3, "required": true, "help": "General condition of the land, cover type, structures present." },
+        { "id": "accessNotes", "label": "Access", "type": "textarea", "bindTo": "siteInspection.accessNotes", "rows": 2, "help": "Road frontage, gates, easements, parking potential." },
+        { "id": "concerns", "label": "Concerns observed", "type": "textarea", "bindTo": "siteInspection.concerns", "rows": 2, "help": "Dumping, erosion, invasive species, encroachments, structures to remove." },
+        { "id": "adjacentLandUse", "label": "Adjacent land use", "type": "select", "options": ["Agricultural", "Residential", "Commercial", "Public/Conservation", "Industrial", "Mixed"] },
+        { "id": "waterFeatures", "label": "Water features present", "type": "multiselect", "options": ["Stream", "River", "Lake", "Pond", "Wetland", "Ditch", "None"] }
+      ]
+    },
+    {
+      "id": "program-plan",
+      "title": "Program plan",
+      "description": "What the District would do with the property.",
+      "fields": [
+        { "id": "intendedUse", "label": "Intended use", "type": "textarea", "bindTo": "programPlan.intendedUse", "rows": 3, "required": true },
+        { "id": "managementApproach", "label": "Management approach", "type": "textarea", "bindTo": "programPlan.managementApproach", "rows": 3, "help": "How the property would be maintained once acquired." },
+        { "id": "horizonYears", "label": "Planning horizon (years)", "type": "number", "bindTo": "programPlan.horizonYears", "min": 1, "max": 30, "default": 5 },
+        { "id": "primaryProgramArea", "label": "Primary program area", "type": "select", "options": ["prescribed_burning", "mowing", "road_maintenance", "boundary_maintenance", "vegetation_management", "invasive_species_control", "rare_species_monitoring", "facility_repair", "timber", "other"] },
+        { "id": "publicAccessPlanned", "label": "Public access planned", "type": "boolean" },
+        { "id": "partners", "label": "Partner organizations", "type": "text", "help": "Agencies or groups expected to share in management." }
+      ]
+    },
+    {
+      "id": "cost-estimate",
+      "title": "Rough cost estimate",
+      "description": "Order-of-magnitude figures. A contingency is added on top of the line items.",
+      "costEstimate": true,
+      "defaultLines": [
+        { "label": "Purchase price", "category": "Acquisition", "amount": 0 },
+        { "label": "Appraisal", "category": "Due diligence", "amount": 0 },
+        { "label": "Environmental assessment", "category": "Due diligence", "amount": 0 },
+        { "label": "Boundary survey", "category": "Due diligence", "amount": 0 },
+        { "label": "Title and closing costs", "category": "Closing", "amount": 0 },
+        { "label": "Initial site work", "category": "Management", "amount": 0 },
+        { "label": "Annual maintenance", "category": "Management", "amount": 0, "recurring": true }
+      ],
+      "defaultContingencyPercent": 10
+    },
+    {
+      "id": "summary",
+      "title": "Summary and rationale",
+      "fields": [
+        { "id": "rationale", "label": "Why the District should consider this property", "type": "textarea", "rows": 4, "required": true },
+        { "id": "risks", "label": "Known risks", "type": "textarea", "rows": 3 },
+        { "id": "alternatives", "label": "Alternatives considered", "type": "textarea", "rows": 2 }
+      ]
+    }
+  ]
+}

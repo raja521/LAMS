@@ -1,0 +1,89 @@
+{
+  "id": "timber-activity",
+  "name": "Timber Activity",
+  "description": "Timber sales, inventory, inspections and load totals by property.",
+  "dataset": "timber",
+  "module": "management",
+  "version": "1",
+  "totals": [
+    "acres",
+    "volume",
+    "loadVolume",
+    "loadValue",
+    "awardedAmount"
+  ],
+  "columns": [
+    {
+      "header": "Record",
+      "key": "title",
+      "width": 32
+    },
+    {
+      "header": "Type",
+      "key": "activityType",
+      "width": 22
+    },
+    {
+      "header": "Parcel",
+      "key": "parcelId",
+      "width": 16
+    },
+    {
+      "header": "County",
+      "key": "county",
+      "width": 16
+    },
+    {
+      "header": "Date",
+      "key": "occurredOn",
+      "type": "date",
+      "width": 13
+    },
+    {
+      "header": "Sale number",
+      "key": "saleNumber",
+      "width": 16
+    },
+    {
+      "header": "Acres",
+      "key": "acres",
+      "type": "number",
+      "width": 10
+    },
+    {
+      "header": "Volume",
+      "key": "volume",
+      "type": "number",
+      "width": 12
+    },
+    {
+      "header": "Loads",
+      "key": "loadCount",
+      "type": "number",
+      "width": 9
+    },
+    {
+      "header": "Load volume",
+      "key": "loadVolume",
+      "type": "number",
+      "width": 13
+    },
+    {
+      "header": "Load value",
+      "key": "loadValue",
+      "type": "currency",
+      "width": 14
+    },
+    {
+      "header": "Awarded",
+      "key": "awardedAmount",
+      "type": "currency",
+      "width": 14
+    },
+    {
+      "header": "Status",
+      "key": "status",
+      "width": 14
+    }
+  ]
+}

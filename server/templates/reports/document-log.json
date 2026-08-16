@@ -1,0 +1,50 @@
+{
+  "id": "document-log",
+  "name": "Document Log",
+  "description": "Every memo, letter, contract and bid the system produced, with who created it and when.",
+  "dataset": "documents",
+  "version": "1",
+  "columns": [
+    {
+      "header": "Number",
+      "key": "documentNumber",
+      "width": 18
+    },
+    {
+      "header": "Title",
+      "key": "title",
+      "width": 40
+    },
+    {
+      "header": "Type",
+      "key": "documentType",
+      "width": 14
+    },
+    {
+      "header": "Module",
+      "key": "module",
+      "width": 14
+    },
+    {
+      "header": "Template",
+      "key": "template",
+      "width": 28
+    },
+    {
+      "header": "Parcel",
+      "key": "parcelId",
+      "width": 16
+    },
+    {
+      "header": "Created by",
+      "key": "generatedBy",
+      "width": 24
+    },
+    {
+      "header": "Created",
+      "key": "generatedAt",
+      "type": "date",
+      "width": 13
+    }
+  ]
+}

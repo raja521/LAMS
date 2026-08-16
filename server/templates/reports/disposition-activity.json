@@ -1,0 +1,87 @@
+{
+  "id": "disposition-activity",
+  "name": "Disposition Activity",
+  "description": "Property being sold or transferred, with values and where each case has reached.",
+  "dataset": "dispositions",
+  "module": "disposition",
+  "version": "1",
+  "totals": [
+    "acres",
+    "estimatedValue",
+    "appraisedValue",
+    "salePrice"
+  ],
+  "columns": [
+    {
+      "header": "Case",
+      "key": "caseNumber",
+      "width": 18
+    },
+    {
+      "header": "Parcel",
+      "key": "parcelId",
+      "width": 16
+    },
+    {
+      "header": "Property",
+      "key": "parcelName",
+      "width": 28
+    },
+    {
+      "header": "County",
+      "key": "county",
+      "width": 16
+    },
+    {
+      "header": "Region",
+      "key": "region",
+      "width": 14
+    },
+    {
+      "header": "Acres",
+      "key": "acres",
+      "type": "number",
+      "width": 10
+    },
+    {
+      "header": "Method",
+      "key": "method",
+      "width": 14
+    },
+    {
+      "header": "Estimated",
+      "key": "estimatedValue",
+      "type": "currency",
+      "width": 15
+    },
+    {
+      "header": "Appraised",
+      "key": "appraisedValue",
+      "type": "currency",
+      "width": 15
+    },
+    {
+      "header": "Sale price",
+      "key": "salePrice",
+      "type": "currency",
+      "width": 15
+    },
+    {
+      "header": "Listed",
+      "key": "listedOn",
+      "type": "date",
+      "width": 13
+    },
+    {
+      "header": "Closed",
+      "key": "closedOn",
+      "type": "date",
+      "width": 13
+    },
+    {
+      "header": "Status",
+      "key": "status",
+      "width": 16
+    }
+  ]
+}

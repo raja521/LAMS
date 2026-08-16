@@ -1,0 +1,82 @@
+{
+  "id": "encumbrance-summary",
+  "name": "Encumbrance Summary",
+  "description": "Purchase orders with amounts committed, invoiced, paid and outstanding. Matches the AccuFund export.",
+  "dataset": "purchaseOrders",
+  "module": "management",
+  "version": "1",
+  "totals": [
+    "amount",
+    "amountInvoiced",
+    "amountPaid",
+    "outstanding"
+  ],
+  "columns": [
+    {
+      "header": "PO",
+      "key": "poNumber",
+      "width": 18
+    },
+    {
+      "header": "Contract",
+      "key": "contractNumber",
+      "width": 18
+    },
+    {
+      "header": "Parcel",
+      "key": "parcelId",
+      "width": 16
+    },
+    {
+      "header": "Vendor",
+      "key": "vendor",
+      "width": 26
+    },
+    {
+      "header": "Description",
+      "key": "description",
+      "width": 32
+    },
+    {
+      "header": "Amount",
+      "key": "amount",
+      "type": "currency",
+      "width": 14
+    },
+    {
+      "header": "Invoiced",
+      "key": "amountInvoiced",
+      "type": "currency",
+      "width": 14
+    },
+    {
+      "header": "Paid",
+      "key": "amountPaid",
+      "type": "currency",
+      "width": 14
+    },
+    {
+      "header": "Outstanding",
+      "key": "outstanding",
+      "type": "currency",
+      "width": 14
+    },
+    {
+      "header": "Issued",
+      "key": "issuedOn",
+      "type": "date",
+      "width": 13
+    },
+    {
+      "header": "Due",
+      "key": "dueOn",
+      "type": "date",
+      "width": 13
+    },
+    {
+      "header": "Status",
+      "key": "status",
+      "width": 18
+    }
+  ]
+}

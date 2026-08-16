@@ -1,0 +1,89 @@
+{
+  "id": "disposition-closing",
+  "name": "Closing Checklist — Disposition",
+  "description": "Paperwork required before a property can be sold or transferred out of District ownership.",
+  "module": "disposition",
+  "version": "1",
+  "items": [
+    {
+      "id": "title-review",
+      "label": "Title reviewed for restrictions",
+      "description": "Confirm no deed restriction, grant condition or reversionary interest prevents disposal.",
+      "category": "Legal",
+      "required": true,
+      "dueInDays": 30
+    },
+    {
+      "id": "appraisal",
+      "label": "Appraisal completed",
+      "description": "Current appraisal establishing fair market value.",
+      "category": "Valuation",
+      "required": true,
+      "dueInDays": 45
+    },
+    {
+      "id": "grant-obligations",
+      "label": "Grant and funding obligations cleared",
+      "description": "Confirm whether any acquisition funding requires repayment or agency consent.",
+      "category": "Finance",
+      "required": true,
+      "dueInDays": 45
+    },
+    {
+      "id": "environmental-review",
+      "label": "Environmental review completed",
+      "description": "Disclose known conditions to the buyer or receiving agency.",
+      "category": "Environmental",
+      "required": true,
+      "dueInDays": 60
+    },
+    {
+      "id": "survey-updated",
+      "label": "Survey current and adequate",
+      "description": "Confirm the existing survey is sufficient, or order an update.",
+      "category": "Survey",
+      "required": false,
+      "dueInDays": 60
+    },
+    {
+      "id": "public-notice",
+      "label": "Public notice published",
+      "description": "Publish notice of the proposed disposition as required.",
+      "category": "Approval",
+      "required": true,
+      "dueInDays": 60
+    },
+    {
+      "id": "board-approval",
+      "label": "Board approval recorded",
+      "description": "Board approval of the disposition, with the recommendation memorandum attached.",
+      "category": "Approval",
+      "required": true,
+      "dueInDays": 70
+    },
+    {
+      "id": "purchase-agreement",
+      "label": "Sale or transfer agreement executed",
+      "description": "Signed by the receiving party and the District's authorised signatory.",
+      "category": "Legal",
+      "required": true,
+      "dueInDays": 100
+    },
+    {
+      "id": "closing-complete",
+      "label": "Closing completed",
+      "description": "Funds received or transfer effected; deed delivered and recorded.",
+      "category": "Closing",
+      "required": true,
+      "dueInDays": 130
+    },
+    {
+      "id": "records-updated",
+      "label": "Property records updated",
+      "description": "Parcel marked disposed in LAMS and removed from active management schedules.",
+      "category": "Closing",
+      "required": true,
+      "dueInDays": 140
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "id": "management-work-order-memo",
+  "name": "Maintenance Work Order Memorandum",
+  "description": "Authorises scheduled maintenance work on a parcel and ties it to a contract and purchase order.",
+  "documentType": "memo",
+  "module": "management",
+  "version": "1",
+  "titleTemplate": "Work Order — {{parcel.parcelId}}",
+  "blocks": [
+    { "type": "heading", "level": 1, "text": "MAINTENANCE WORK ORDER", "align": "center" },
+    { "type": "divider" },
+
+    {
+      "type": "keyValue",
+      "labelWidth": 22,
+      "borders": false,
+      "items": [
+        { "label": "To:", "value": "{{vendorName}}" },
+        { "label": "From:", "value": "{{preparedBy.name}}, {{org.division}}" },
+        { "label": "Date:", "value": "{{doc.date | date}}" },
+        { "label": "Document No:", "value": "{{doc.number}}" },
+        { "label": "Contract:", "value": "{{contract.contractNumber}}" },
+        { "label": "Purchase Order:", "value": "{{purchaseOrder.poNumber}}" }
+      ]
+    },
+
+    { "type": "heading", "level": 2, "text": "Property" },
+    {
+      "type": "keyValue",
+      "labelWidth": 32,
+      "items": [
+        { "label": "Parcel", "value": "{{parcel.parcelId}} — {{parcel.name}}" },
+        { "label": "County", "value": "{{parcel.county}}" },
+        { "label": "Region", "value": "{{parcel.region}}" },
+        { "label": "Total size", "value": "{{parcel.area.value | number}} {{parcel.area.unit}}" }
+      ]
+    },
+
+    { "type": "heading", "level": 2, "text": "Work authorised" },
+    {
+      "type": "table",
+      "source": "tasks",
+      "emptyText": "No tasks are currently scheduled for this parcel.",
+      "columns": [
+        { "header": "#", "field": "$index", "width": 6, "align": "center" },
+        { "header": "Task", "field": "title", "width": 30 },
+        { "header": "Type", "field": "taskTypeLabel", "width": 22 },
+        { "header": "Scheduled", "field": "scheduledLabel", "width": 20, "align": "center" },
+        { "header": "Acres", "field": "acres", "width": 10, "align": "center" },
+        { "header": "Estimate", "field": "estimatedCostLabel", "width": 12, "align": "right" }
+      ]
+    },
+    {
+      "type": "keyValue",
+      "labelWidth": 32,
+      "items": [{ "label": "Total estimated cost", "value": "{{totals.estimatedCost | currency}}" }]
+    },
+
+    { "type": "heading", "level": 2, "text": "Conditions" },
+    {
+      "type": "list",
+      "items": [
+        "All work shall comply with the terms of contract {{contract.contractNumber}}.",
+        "Costs may not exceed the amount encumbered on purchase order {{purchaseOrder.poNumber}} without prior written approval.",
+        "Notify {{org.division}} at least 48 hours before mobilising to the site.",
+        "Report completion in LAMS so the task record and the purchase order stay in step."
+      ]
+    },
+
+    {
+      "type": "signature",
+      "lines": [
+        { "label": "{{preparedBy.name}}", "subLabel": "{{org.division}} — authorised by" },
+        { "label": "{{vendorName}}", "subLabel": "Accepted — date: ______________________" }
+      ]
+    }
+  ]
+}
